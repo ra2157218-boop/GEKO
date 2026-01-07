@@ -10,7 +10,7 @@ with open("README.md", "r", encoding="utf-8") as f:
     long_description = f.read()
 
 setup(
-    name="geko",
+    name="gekolib",
     version="0.1.0",
     author="Syed Abdur Rehman",
     author_email="your.email@example.com",

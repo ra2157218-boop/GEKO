@@ -37,7 +37,7 @@ $$\mathcal{L}_{GEKO} = \frac{1}{N} \sum_{i=1}^{N} w_i \cdot \ell(x_i, y_i) \quad
 ## Installation
 
 ```bash
-pip install geko
+pip install gekolib
 ```
 
 ---
