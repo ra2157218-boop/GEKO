@@ -1,8 +1,6 @@
 # GEKO: Gradient-Efficient Knowledge Optimization
 
-<p align="center">
-  <img src="assets/geko_logo.png" alt="GEKO Logo" width="200">
-</p>
+<h1 align="center">🦎</h1>
 
 <p align="center">
   <img src="https://img.shields.io/badge/python-3.8+-blue.svg" alt="Python">
@@ -284,11 +282,11 @@ Or use online tools:
 ## Citation
 
 ```bibtex
-@software{geko2024,
+@software{geko2026,
   author = {Syed Abdur Rehman},
   title = {GEKO: Gradient-Efficient Knowledge Optimization},
-  year = {2024},
-  url = {https://github.com/yourusername/geko}
+  year = {2026},
+  url = {https://github.com/ra2157218-boop/GEKO}
 }
 ```
 
