@@ -1,6 +1,10 @@
 # GEKO: Gradient-Efficient Knowledge Optimization
 
-<h1 align="center">🦎</h1>
+<div align="center">
+
+# 🦎
+
+</div>
 
 <p align="center">
   <img src="https://img.shields.io/badge/python-3.8+-blue.svg" alt="Python">
@@ -257,25 +261,6 @@ Where $\mathbb{E}[F]$ = expected freeze fraction.
 | Training Time | 100% | 50-70% | **30-50% faster** |
 | Compute Cost | 100% | 50-70% | **30-50% cheaper** |
 | Final Loss | $\ell^*$ | $\leq \ell^*$ | Equal or better |
-
----
-
-## Generating the Diagrams
-
-To create the PNG assets, use these tools:
-
-```bash
-# Install diagram tools
-pip install matplotlib seaborn
-
-# Generate all diagrams
-python scripts/generate_diagrams.py
-```
-
-Or use online tools:
-- **LaTeX equations**: [latex2png.com](https://latex2png.com)
-- **Flowcharts**: [draw.io](https://draw.io) or [excalidraw.com](https://excalidraw.com)
-- **Graphs**: matplotlib or [plotly](https://plotly.com)
 
 ---
 
