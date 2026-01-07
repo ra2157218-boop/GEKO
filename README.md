@@ -1,10 +1,8 @@
 # GEKO: Gradient-Efficient Knowledge Optimization
 
-<div align="center">
-
-# 🦎
-
-</div>
+<p align="center">
+  <img src="https://em-content.zobj.net/source/apple/391/lizard_1f98e.png" width="150" alt="GEKO">
+</p>
 
 <p align="center">
   <img src="https://img.shields.io/badge/python-3.8+-blue.svg" alt="Python">
