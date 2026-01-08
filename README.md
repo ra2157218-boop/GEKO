@@ -71,24 +71,6 @@ print(trainer.get_efficiency_report())
   <img src="https://raw.githubusercontent.com/ra2157218-boop/GEKO/main/assets/bucket_classification.png" width="600" alt="Bucket Classification">
 </p>
 
-### Sample Partitioning
-
-```mermaid
-flowchart TD
-    A[Sample] --> B{Correct?}
-    B -->|Yes| C{Confident & High Quality?}
-    B -->|No| D{High Confidence?}
-    C -->|Yes| E[🔵 FREEZE<br/>w = 0<br/>Never train]
-    C -->|No| F[🟢 LIGHT<br/>w = 0<br/>Low priority]
-    D -->|Yes| G[🔴 HARD<br/>w = 3<br/>Highest priority]
-    D -->|No| H[🟠 FOCUS<br/>w = 1<br/>Medium priority]
-
-    style E fill:#3498db,color:#fff
-    style F fill:#2ecc71,color:#fff
-    style G fill:#e74c3c,color:#fff
-    style H fill:#f39c12,color:#fff
-```
-
 ### Bucket Definitions
 
 | Bucket | Condition | Weight | Description |
@@ -106,30 +88,7 @@ flowchart TD
   <img src="https://raw.githubusercontent.com/ra2157218-boop/GEKO/main/assets/mountain_curriculum.png" width="600" alt="Mountain Curriculum">
 </p>
 
-```mermaid
-%%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#3498db'}}}%%
-xychart-beta
-    title "Mountain Curriculum - Difficulty vs Progress"
-    x-axis "Training Progress" [0, 0.15, 0.35, 0.65, 0.85, 1.0]
-    y-axis "Difficulty" 0 --> 1
-    line [0.2, 0.5, 1.0, 1.0, 0.5, 0.2]
-```
-
 ### Five Phases
-
-```mermaid
-gantt
-    title Mountain Curriculum Phases
-    dateFormat X
-    axisFormat %s
-
-    section Difficulty
-    WARMUP (Easy)       :a1, 0, 15
-    ASCENT (Medium)     :a2, 15, 35
-    PEAK (Hard)         :a3, 35, 65
-    DESCENT (Medium)    :a4, 65, 85
-    CONSOLIDATE (Easy)  :a5, 85, 100
-```
 
 | Phase | Progress | HARD | FOCUS | LIGHT | Strategy |
 |:------|:--------:|:----:|:-----:|:-----:|:---------|
@@ -151,17 +110,6 @@ Each sample maintains a Q-value representing "learnability":
 
 $$Q_{t+1}(s) = (1 - \alpha) \cdot Q_t(s) + \alpha \cdot \left(1 - \frac{\ell_t(s)}{\ell_{max}}\right)$$
 
-```mermaid
-graph LR
-    A[Sample Loss ↓] --> B[Q-Value ↑]
-    B --> C{Q > threshold?}
-    C -->|Yes| D[Move to FREEZE]
-    C -->|No| E[Stay trainable]
-
-    style D fill:#3498db,color:#fff
-    style E fill:#f39c12,color:#fff
-```
-
 ---
 
 ## Efficiency Analysis
@@ -169,18 +117,6 @@ graph LR
 <p align="center">
   <img src="https://raw.githubusercontent.com/ra2157218-boop/GEKO/main/assets/efficiency_curve.png" width="600" alt="Efficiency Curve">
 </p>
-
-### Compute Savings Over Time
-
-```mermaid
-%%{init: {'theme': 'base'}}%%
-pie showData
-    title "Bucket Distribution (Epoch 10)"
-    "FREEZE (Saved)" : 80
-    "LIGHT" : 15
-    "FOCUS" : 4
-    "HARD" : 1
-```
 
 ### Training Progression
 
@@ -199,38 +135,6 @@ pie showData
 <p align="center">
   <img src="https://raw.githubusercontent.com/ra2157218-boop/GEKO/main/assets/architecture.png" width="600" alt="GEKO Architecture">
 </p>
-
-```mermaid
-flowchart TB
-    subgraph Input
-        A[Any LLM Model]
-        B[Training Dataset]
-    end
-
-    subgraph GEKO["GEKO Framework"]
-        C[GEKOTrainer]
-        D[Sample Partitioner]
-        E[Mountain Curriculum]
-        F[Sample States]
-
-        C --> D
-        C --> E
-        D --> F
-        E --> F
-    end
-
-    subgraph Output
-        G[Efficient Training]
-        H[Compute Savings]
-    end
-
-    A --> C
-    B --> C
-    C --> G
-    C --> H
-
-    style GEKO fill:#f5f5f5,stroke:#333
-```
 
 ---
 
