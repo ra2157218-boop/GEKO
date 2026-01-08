@@ -17,7 +17,7 @@ setup(
     description="Gradient-Efficient Knowledge Optimization - Smart training for any LLM",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/yourusername/geko",
+    url="https://github.com/ra2157218-boop/GEKO",
     packages=find_packages(),
     classifiers=[
         "Development Status :: 3 - Alpha",

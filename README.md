@@ -5,9 +5,11 @@
 </p>
 
 <p align="center">
+  <a href="https://pypi.org/project/gekolib/"><img src="https://img.shields.io/pypi/v/gekolib.svg" alt="PyPI"></a>
   <img src="https://img.shields.io/badge/python-3.8+-blue.svg" alt="Python">
   <img src="https://img.shields.io/badge/pytorch-1.9+-red.svg" alt="PyTorch">
   <img src="https://img.shields.io/badge/license-Apache%202.0-green.svg" alt="License">
+  <a href="https://doi.org/10.5281/zenodo.18177743"><img src="https://zenodo.org/badge/DOI/10.5281/zenodo.18177743.svg" alt="DOI"></a>
 </p>
 
 <p align="center">
@@ -21,7 +23,7 @@
 ## Key Insight
 
 <p align="center">
-  <img src="assets/geko_insight.png" alt="GEKO Insight" width="700">
+  <img src="https://raw.githubusercontent.com/ra2157218-boop/GEKO/main/assets/geko_insight.png" width="600" alt="GEKO Key Insight">
 </p>
 
 Traditional training treats all samples equally:
@@ -65,11 +67,11 @@ print(trainer.get_efficiency_report())
 
 ## The GEKO Algorithm
 
-### Sample Partitioning
-
 <p align="center">
-  <img src="assets/bucket_classification.png" alt="Bucket Classification" width="800">
+  <img src="https://raw.githubusercontent.com/ra2157218-boop/GEKO/main/assets/bucket_classification.png" width="600" alt="Bucket Classification">
 </p>
+
+### Sample Partitioning
 
 ```mermaid
 flowchart TD
@@ -101,7 +103,7 @@ flowchart TD
 ## Mountain Curriculum
 
 <p align="center">
-  <img src="assets/mountain_curriculum.png" alt="Mountain Curriculum" width="700">
+  <img src="https://raw.githubusercontent.com/ra2157218-boop/GEKO/main/assets/mountain_curriculum.png" width="600" alt="Mountain Curriculum">
 </p>
 
 ```mermaid
@@ -142,7 +144,7 @@ gantt
 ## Q-Value Learning
 
 <p align="center">
-  <img src="assets/q_value_learning.png" alt="Q-Value Learning" width="600">
+  <img src="https://raw.githubusercontent.com/ra2157218-boop/GEKO/main/assets/q_value_learning.png" width="600" alt="Q-Value Learning">
 </p>
 
 Each sample maintains a Q-value representing "learnability":
@@ -165,7 +167,7 @@ graph LR
 ## Efficiency Analysis
 
 <p align="center">
-  <img src="assets/efficiency_curve.png" alt="Efficiency Curve" width="600">
+  <img src="https://raw.githubusercontent.com/ra2157218-boop/GEKO/main/assets/efficiency_curve.png" width="600" alt="Efficiency Curve">
 </p>
 
 ### Compute Savings Over Time
@@ -195,7 +197,7 @@ pie showData
 ## Architecture
 
 <p align="center">
-  <img src="assets/architecture.png" alt="GEKO Architecture" width="800">
+  <img src="https://raw.githubusercontent.com/ra2157218-boop/GEKO/main/assets/architecture.png" width="600" alt="GEKO Architecture">
 </p>
 
 ```mermaid
@@ -251,7 +253,7 @@ Where $\mathbb{E}[F]$ = expected freeze fraction.
 ## Results
 
 <p align="center">
-  <img src="assets/results_comparison.png" alt="Results" width="600">
+  <img src="https://raw.githubusercontent.com/ra2157218-boop/GEKO/main/assets/results_comparison.png" width="600" alt="Results Comparison">
 </p>
 
 | Metric | Standard | GEKO | Improvement |
@@ -269,7 +271,8 @@ Where $\mathbb{E}[F]$ = expected freeze fraction.
   author = {Syed Abdur Rehman},
   title = {GEKO: Gradient-Efficient Knowledge Optimization},
   year = {2026},
-  url = {https://github.com/ra2157218-boop/GEKO}
+  url = {https://github.com/ra2157218-boop/GEKO},
+  doi = {10.5281/zenodo.18177743}
 }
 ```
 
