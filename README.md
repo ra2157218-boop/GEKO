@@ -2,7 +2,7 @@
 
 <p align="center">
   <img src="https://em-content.zobj.net/source/apple/391/lizard_1f98e.png" width="150" alt="GEKO">
-</p>
+</p> 
 
 <p align="center">
   <a href="https://pypi.org/project/gekolib/"><img src="https://img.shields.io/pypi/v/gekolib.svg" alt="PyPI"></a>
