@@ -10,7 +10,7 @@
   <img src="https://img.shields.io/badge/pytorch-1.9+-red.svg" alt="PyTorch">
   <img src="https://img.shields.io/badge/license-Apache%202.0-green.svg" alt="License">
   <a href="https://github.com/ra2157218-boop/GEKO/actions"><img src="https://github.com/ra2157218-boop/GEKO/actions/workflows/tests.yml/badge.svg" alt="Tests"></a>
-  <a href="https://doi.org/10.5281/zenodo.18177743"><img src="https://zenodo.org/badge/DOI/10.5281/zenodo.18177743.svg" alt="DOI"></a>
+  <a href="https://doi.org/10.5281/zenodo.18750303"><img src="https://zenodo.org/badge/DOI/10.5281/zenodo.18750303.svg" alt="DOI"></a>
 </p>
 
 <p align="center">
@@ -348,7 +348,7 @@ Loss progression: 5.89 → 0.87 → 0.41 → 0.17 → 0.13. Final accuracy: **94
   title = {GEKO: Gradient-Efficient Knowledge Optimization},
   year = {2026},
   url = {https://github.com/ra2157218-boop/GEKO},
-  doi = {10.5281/zenodo.18177743}
+  doi = {10.5281/zenodo.18750303}
 }
 ```
 
