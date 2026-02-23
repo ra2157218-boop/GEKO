@@ -59,6 +59,27 @@ class PartitionStats:
             f"HARD: {self.hard_count} ({self.hard_ratio:.1%})"
         )
 
+    def to_dict(self) -> dict:
+        """Return a JSON-serializable dict for checkpoint save."""
+        return {
+            "total": self.total,
+            "freeze_count": self.freeze_count,
+            "light_count": self.light_count,
+            "focus_count": self.focus_count,
+            "hard_count": self.hard_count,
+        }
+
+    @classmethod
+    def from_dict(cls, d: dict) -> "PartitionStats":
+        """Build PartitionStats from a dict (e.g. loaded from checkpoint)."""
+        return cls(
+            total=d["total"],
+            freeze_count=d["freeze_count"],
+            light_count=d["light_count"],
+            focus_count=d["focus_count"],
+            hard_count=d["hard_count"],
+        )
+
 
 class SamplePartitioner:
     """

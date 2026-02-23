@@ -11,9 +11,9 @@ with open("README.md", "r", encoding="utf-8") as f:
 
 setup(
     name="gekolib",
-    version="0.1.1",
+    version="0.2.0",
     author="Syed Abdur Rehman",
-    author_email="your.email@example.com",
+    author_email="ra2157218@gmail.com",
     description="Gradient-Efficient Knowledge Optimization - Smart training for any LLM",
     long_description=long_description,
     long_description_content_type="text/markdown",

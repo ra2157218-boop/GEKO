@@ -7,10 +7,10 @@ Defines the fundamental building blocks:
 - GEKOConfig: Configuration for GEKO training
 """
 
+from collections import deque
 from enum import Enum
 from dataclasses import dataclass, field
 from typing import Dict, Optional, Tuple, List
-import math
 
 
 class Bucket(Enum):
@@ -48,7 +48,8 @@ class SampleState:
         bucket: Current GEKO bucket assignment
         q_value: Estimated "learnability" score (0-1)
         confidence: Model's confidence on this sample
-        loss_history: Recent losses for trend analysis
+        quality: Loss stability score (0-1); auto-computed from loss variance
+        loss_history: Recent losses for trend analysis (rolling window of 5)
         times_seen: How many times trained on this sample
         last_loss: Most recent loss value
         frozen_at_epoch: When sample moved to FREEZE (if applicable)
@@ -58,13 +59,13 @@ class SampleState:
     q_value: float = 0.5  # Initial Q-value (neutral)
     confidence: float = 0.0
     quality: float = 1.0
-    loss_history: List[float] = field(default_factory=list)
+    loss_history: deque = field(default_factory=lambda: deque(maxlen=5))
     times_seen: int = 0
     last_loss: float = float('inf')
     frozen_at_epoch: Optional[int] = None
     correct: bool = False
 
-    def update(self, loss: float, confidence: float, correct: bool, epoch: int = 0):
+    def update(self, loss: float, confidence: float, correct: bool, epoch: int = 0, lr: float = 0.1, loss_scale: float = 10.0):
         """
         Update sample state after a training step.
 
@@ -73,31 +74,50 @@ class SampleState:
             confidence: Model's confidence (0-1)
             correct: Whether model got it right
             epoch: Current training epoch
+            lr: Learning rate for Q-value exponential moving average
+            loss_scale: Normalizer for Q-value update; losses >= loss_scale map to Q=0.
+                        Set to your model's typical maximum loss (default 10.0).
+                        For small-loss models (e.g. cross-entropy ~0–2), use loss_scale=2.0.
         """
         self.times_seen += 1
         self.last_loss = loss
         self.confidence = confidence
         self.correct = correct
 
-        # Maintain rolling history (last 5 losses)
+        # Maintain rolling history (last 5 losses) via deque(maxlen=5)
         self.loss_history.append(loss)
-        if len(self.loss_history) > 5:
-            self.loss_history.pop(0)
+
+        # Auto-compute quality from loss stability (low variance = high quality)
+        if len(self.loss_history) >= 2:
+            losses_list = list(self.loss_history)
+            mean = sum(losses_list) / len(losses_list)
+            variance = sum((l - mean) ** 2 for l in losses_list) / len(losses_list)
+            std = variance ** 0.5
+            self.quality = max(0.0, 1.0 - min(std, 1.0))
 
         # Update Q-value using exponential moving average
         # Q increases when loss decreases (learning happening)
-        loss_trend = self._compute_loss_trend()
-        self.q_value = 0.9 * self.q_value + 0.1 * (1.0 - min(loss / 10.0, 1.0))
+        self.q_value = (1 - lr) * self.q_value + lr * (1.0 - min(loss / loss_scale, 1.0))
 
         # Track when frozen
         if self.bucket == Bucket.FREEZE and self.frozen_at_epoch is None:
             self.frozen_at_epoch = epoch
 
     def _compute_loss_trend(self) -> float:
-        """Compute loss trend: negative = improving, positive = worsening."""
-        if len(self.loss_history) < 2:
+        """
+        Compute loss trend via linear regression slope over the history window.
+
+        Returns negative if loss is decreasing (improving), positive if increasing.
+        """
+        losses = list(self.loss_history)
+        n = len(losses)
+        if n < 2:
             return 0.0
-        return self.loss_history[-1] - self.loss_history[0]
+        x_mean = (n - 1) / 2
+        y_mean = sum(losses) / n
+        numer = sum((i - x_mean) * (l - y_mean) for i, l in enumerate(losses))
+        denom = sum((i - x_mean) ** 2 for i in range(n))
+        return numer / denom if denom > 0 else 0.0
 
     @property
     def is_improving(self) -> bool:
@@ -136,6 +156,21 @@ class SampleState:
 
         return base
 
+    def to_dict(self) -> dict:
+        """Return a JSON-serializable representation of this state."""
+        return {
+            'sample_id': self.sample_id,
+            'bucket': self.bucket.value,
+            'q_value': self.q_value,
+            'confidence': self.confidence,
+            'quality': self.quality,
+            'loss_history': list(self.loss_history),
+            'times_seen': self.times_seen,
+            'last_loss': self.last_loss,
+            'frozen_at_epoch': self.frozen_at_epoch,
+            'correct': self.correct,
+        }
+
 
 @dataclass
 class GEKOConfig:
@@ -166,12 +201,12 @@ class GEKOConfig:
 
     # Curriculum settings
     use_curriculum: bool = True
-    curriculum_phases: int = 5  # Mountain curriculum phases
-    warmup_epochs: int = 1
 
     # Q-value settings
     q_value_lr: float = 0.1  # Learning rate for Q-value updates
     min_q_for_freeze: float = 0.8  # Minimum Q-value to allow FREEZE
+    q_value_loss_scale: float = 10.0  # Normalizer: losses above this saturate Q at 0.
+                                       # Set to your model's typical maximum loss.
 
     # Training settings
     repartition_every: int = 1  # Re-partition every N epochs
@@ -180,13 +215,49 @@ class GEKOConfig:
     # Early stopping for samples
     max_times_seen: int = 50  # Stop training on sample after this
 
+    def __post_init__(self):
+        """Validate configuration on creation."""
+        self.validate()
+
     def validate(self):
         """Validate configuration values."""
-        assert 0 < self.freeze_confidence <= 1.0
-        assert 0 < self.freeze_quality <= 1.0
-        assert 0 < self.focus_confidence < self.freeze_confidence
-        assert len(self.bucket_weights) == 3
-        assert all(w >= 0 for w in self.bucket_weights)
+        if not (0 < self.freeze_confidence <= 1.0):
+            raise ValueError(
+                f"freeze_confidence must be in (0, 1], got {self.freeze_confidence}"
+            )
+        if not (0 < self.freeze_quality <= 1.0):
+            raise ValueError(
+                f"freeze_quality must be in (0, 1], got {self.freeze_quality}"
+            )
+        if not (0 < self.focus_confidence < self.freeze_confidence):
+            raise ValueError(
+                f"focus_confidence ({self.focus_confidence}) must be > 0 and "
+                f"< freeze_confidence ({self.freeze_confidence})"
+            )
+        if len(self.bucket_weights) != 3:
+            raise ValueError(
+                f"bucket_weights must have exactly 3 values (HARD, FOCUS, LIGHT), "
+                f"got {len(self.bucket_weights)}"
+            )
+        if any(w < 0 for w in self.bucket_weights):
+            raise ValueError(
+                f"all bucket_weights must be >= 0, got {self.bucket_weights}"
+            )
+
+    def __repr__(self) -> str:
+        return (
+            f"GEKOConfig(\n"
+            f"  Thresholds : freeze_confidence={self.freeze_confidence}, "
+            f"freeze_quality={self.freeze_quality}, "
+            f"focus_confidence={self.focus_confidence}\n"
+            f"  Weights    : HARD={self.bucket_weights[0]}, "
+            f"FOCUS={self.bucket_weights[1]}, "
+            f"LIGHT={self.bucket_weights[2]}\n"
+            f"  Curriculum : use={self.use_curriculum}\n"
+            f"  Q-value lr : {self.q_value_lr}, "
+            f"min_q_for_freeze={self.min_q_for_freeze}\n"
+            f")"
+        )
 
     def get_bucket_weight(self, bucket: Bucket) -> int:
         """Get training weight for a bucket."""

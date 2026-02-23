@@ -40,6 +40,12 @@ Thumbs.db
 # Paper (keep private)
 paper/
 
+# Model weights (too large for GitHub)
+*.safetensors
+*.bin
+*.pt
+*.pth
+
 # Misc
 *.log
 *.tmp

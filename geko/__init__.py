@@ -9,17 +9,16 @@ Usage:
 
     trainer = GEKOTrainer(
         model=your_model,
-        tokenizer=your_tokenizer,
-        config=GEKOConfig()
+        train_dataset=your_dataset,
     )
-    trainer.train(dataset)
+    trainer.train()
 
 Paper: "GEKO: Gradient-Efficient Knowledge Optimization via
         Confidence-Gated Sample Partitioning"
 Author: Syed Abdur Rehman
 """
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 __author__ = "Syed Abdur Rehman"
 
 from .core import (
@@ -27,7 +26,7 @@ from .core import (
     SampleState,
     GEKOConfig,
 )
-from .trainer import GEKOTrainer
+from .trainer import GEKOTrainer, GEKOTrainingArgs, GEKODataset
 from .curriculum import MountainCurriculum
 from .partitioner import SamplePartitioner
 
@@ -36,6 +35,8 @@ __all__ = [
     "SampleState",
     "GEKOConfig",
     "GEKOTrainer",
+    "GEKOTrainingArgs",
+    "GEKODataset",
     "MountainCurriculum",
     "SamplePartitioner",
 ]

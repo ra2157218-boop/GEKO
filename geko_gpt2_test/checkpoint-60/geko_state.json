@@ -1,0 +1,1590 @@
+{
+  "sample_states": {
+    "0": {
+      "sample_id": "0",
+      "bucket": "LIGHT",
+      "q_value": 0.5042302035868168,
+      "confidence": 0.9243459105491638,
+      "quality": 0.0,
+      "loss_history": [
+        5.435135841369629,
+        3.2782514095306396,
+        0.9361730217933655,
+        0.29485249519348145
+      ],
+      "times_seen": 4,
+      "last_loss": 0.29485249519348145,
+      "frozen_at_epoch": null,
+      "correct": true
+    },
+    "1": {
+      "sample_id": "1",
+      "bucket": "LIGHT",
+      "q_value": 0.6818661691749572,
+      "confidence": 0.9865837693214417,
+      "quality": 0.7209015114580727,
+      "loss_history": [
+        0.8232518434524536,
+        0.1833384931087494,
+        0.10600818693637848,
+        0.14357787370681763,
+        0.08830732107162476
+      ],
+      "times_seen": 7,
+      "last_loss": 0.08830732107162476,
+      "frozen_at_epoch": null,
+      "correct": true
+    },
+    "2": {
+      "sample_id": "2",
+      "bucket": "LIGHT",
+      "q_value": 0.5796520456926824,
+      "confidence": 0.976037859916687,
+      "quality": 0.0,
+      "loss_history": [
+        6.6953301429748535,
+        0.5558843016624451,
+        0.4890659749507904,
+        0.2958928346633911,
+        0.13105152547359467
+      ],
+      "times_seen": 6,
+      "last_loss": 0.13105152547359467,
+      "frozen_at_epoch": null,
+      "correct": true
+    },
+    "3": {
+      "sample_id": "3",
+      "bucket": "FOCUS",
+      "q_value": 0.5902532881788909,
+      "confidence": 0.9592511057853699,
+      "quality": 0.0,
+      "loss_history": [
+        7.794922828674316,
+        0.13105152547359467,
+        0.1300695389509201,
+        0.12865415215492249
+      ],
+      "times_seen": 4,
+      "last_loss": 0.12865415215492249,
+      "frozen_at_epoch": null,
+      "correct": true
+    },
+    "4": {
+      "sample_id": "4",
+      "bucket": "LIGHT",
+      "q_value": 0.5992101998341084,
+      "confidence": 0.9546183347702026,
+      "quality": 0.0,
+      "loss_history": [
+        7.809291839599609,
+        0.5707751512527466,
+        0.5558843016624451,
+        0.47500079870224,
+        0.30352991819381714
+      ],
+      "times_seen": 5,
+      "last_loss": 0.30352991819381714,
+      "frozen_at_epoch": null,
+      "correct": true
+    },
+    "5": {
+      "sample_id": "5",
+      "bucket": "LIGHT",
+      "q_value": 0.5172682377171517,
+      "confidence": 0.9492343664169312,
+      "quality": 0.0,
+      "loss_history": [
+        7.809291839599609,
+        3.2782514095306396,
+        1.2632335424423218,
+        1.0587762594223022,
+        0.5091074109077454
+      ],
+      "times_seen": 5,
+      "last_loss": 0.5091074109077454,
+      "frozen_at_epoch": null,
+      "correct": true
+    },
+    "6": {
+      "sample_id": "6",
+      "bucket": "FREEZE",
+      "q_value": 0.729862122747034,
+      "confidence": 0.9579638242721558,
+      "quality": 0.9818943145576976,
+      "loss_history": [
+        0.15664055943489075,
+        0.15664055943489075,
+        0.10788268595933914,
+        0.14736230671405792,
+        0.14683671295642853
+      ],
+      "times_seen": 9,
+      "last_loss": 0.14683671295642853,
+      "frozen_at_epoch": 4,
+      "correct": true
+    },
+    "7": {
+      "sample_id": "7",
+      "bucket": "LIGHT",
+      "q_value": 0.5449425659281015,
+      "confidence": 0.9841804504394531,
+      "quality": 0.0,
+      "loss_history": [
+        7.809291839599609,
+        7.6499433517456055,
+        0.5558843016624451,
+        0.30352991819381714,
+        0.12865415215492249
+      ],
+      "times_seen": 5,
+      "last_loss": 0.12865415215492249,
+      "frozen_at_epoch": null,
+      "correct": true
+    },
+    "8": {
+      "sample_id": "8",
+      "bucket": "LIGHT",
+      "q_value": 0.47209371216893203,
+      "confidence": 0.9716230034828186,
+      "quality": 0.0,
+      "loss_history": [
+        6.788252353668213,
+        5.884615421295166,
+        1.8598060607910156,
+        0.1644260585308075
+      ],
+      "times_seen": 4,
+      "last_loss": 0.1644260585308075,
+      "frozen_at_epoch": null,
+      "correct": true
+    },
+    "9": {
+      "sample_id": "9",
+      "bucket": "LIGHT",
+      "q_value": 0.5622074547410011,
+      "confidence": 0.9211074113845825,
+      "quality": 0.8737616539001465,
+      "loss_history": [
+        0.8232518434524536,
+        0.5707751512527466
+      ],
+      "times_seen": 2,
+      "last_loss": 0.5707751512527466,
+      "frozen_at_epoch": null,
+      "correct": true
+    },
+    "10": {
+      "sample_id": "10",
+      "bucket": "FREEZE",
+      "q_value": 0.6452593071602285,
+      "confidence": 0.9384778141975403,
+      "quality": 0.7133415481958088,
+      "loss_history": [
+        0.8232518434524536,
+        0.27533382177352905,
+        0.10788268595933914,
+        0.14736230671405792
+      ],
+      "times_seen": 4,
+      "last_loss": 0.14736230671405792,
+      "frozen_at_epoch": 4,
+      "correct": true
+    },
+    "11": {
+      "sample_id": "11",
+      "bucket": "LIGHT",
+      "q_value": 0.373022522802353,
+      "confidence": 0.902990460395813,
+      "quality": 0.0,
+      "loss_history": [
+        7.809291839599609,
+        7.6499433517456055,
+        7.794922828674316,
+        6.788252353668213,
+        0.8888990879058838
+      ],
+      "times_seen": 5,
+      "last_loss": 0.8888990879058838,
+      "frozen_at_epoch": null,
+      "correct": true
+    },
+    "12": {
+      "sample_id": "12",
+      "bucket": "LIGHT",
+      "q_value": 0.5585293648016454,
+      "confidence": 0.9750664830207825,
+      "quality": 0.0,
+      "loss_history": [
+        4.310661792755127,
+        3.2782514095306396,
+        0.5558843016624451,
+        0.29485249519348145,
+        0.11914660036563873
+      ],
+      "times_seen": 5,
+      "last_loss": 0.11914660036563873,
+      "frozen_at_epoch": null,
+      "correct": true
+    },
+    "13": {
+      "sample_id": "13",
+      "bucket": "LIGHT",
+      "q_value": 0.6307512948613168,
+      "confidence": 0.9662787914276123,
+      "quality": 0.6815244281046577,
+      "loss_history": [
+        1.0587762594223022,
+        0.4709815979003906,
+        0.4468819797039032,
+        0.30352991819381714,
+        0.10600818693637848
+      ],
+      "times_seen": 6,
+      "last_loss": 0.10600818693637848,
+      "frozen_at_epoch": null,
+      "correct": true
+    },
+    "14": {
+      "sample_id": "14",
+      "bucket": "LIGHT",
+      "q_value": 0.6076896652799846,
+      "confidence": 0.9621803760528564,
+      "quality": 0.0,
+      "loss_history": [
+        7.6499433517456055,
+        0.8888990879058838,
+        0.29485249519348145,
+        0.29485249519348145,
+        0.10600818693637848
+      ],
+      "times_seen": 5,
+      "last_loss": 0.10600818693637848,
+      "frozen_at_epoch": null,
+      "correct": true
+    },
+    "15": {
+      "sample_id": "15",
+      "bucket": "FREEZE",
+      "q_value": 0.6920800055974454,
+      "confidence": 0.9745100736618042,
+      "quality": 0.9730693356383677,
+      "loss_history": [
+        0.1833384931087494,
+        0.15664055943489075,
+        0.14736230671405792,
+        0.1130458191037178,
+        0.1130458191037178
+      ],
+      "times_seen": 7,
+      "last_loss": 0.1130458191037178,
+      "frozen_at_epoch": 4,
+      "correct": true
+    },
+    "16": {
+      "sample_id": "16",
+      "bucket": "FREEZE",
+      "q_value": 0.6259049595236779,
+      "confidence": 0.9762296676635742,
+      "quality": 0.6888375274497032,
+      "loss_history": [
+        1.0587762594223022,
+        0.6174324154853821,
+        0.2958928346633911,
+        0.30352991819381714
+      ],
+      "times_seen": 4,
+      "last_loss": 0.30352991819381714,
+      "frozen_at_epoch": 3,
+      "correct": true
+    },
+    "17": {
+      "sample_id": "17",
+      "bucket": "LIGHT",
+      "q_value": 0.5989723130762578,
+      "confidence": 0.9761555194854736,
+      "quality": 0.7842730415560621,
+      "loss_history": [
+        0.8232518434524536,
+        0.5549122095108032,
+        0.29485249519348145
+      ],
+      "times_seen": 3,
+      "last_loss": 0.29485249519348145,
+      "frozen_at_epoch": null,
+      "correct": true
+    },
+    "18": {
+      "sample_id": "18",
+      "bucket": "LIGHT",
+      "q_value": 0.582009293101728,
+      "confidence": 0.9743379354476929,
+      "quality": 0.7952014617621899,
+      "loss_history": [
+        0.4890659749507904,
+        0.07946889847517014
+      ],
+      "times_seen": 2,
+      "last_loss": 0.07946889847517014,
+      "frozen_at_epoch": null,
+      "correct": true
+    },
+    "19": {
+      "sample_id": "19",
+      "bucket": "FREEZE",
+      "q_value": 0.6144054796844722,
+      "confidence": 0.9705784916877747,
+      "quality": 0.8924608339253053,
+      "loss_history": [
+        0.4709815979003906,
+        0.2571844458580017,
+        0.2308197170495987
+      ],
+      "times_seen": 3,
+      "last_loss": 0.2308197170495987,
+      "frozen_at_epoch": 4,
+      "correct": true
+    },
+    "20": {
+      "sample_id": "20",
+      "bucket": "LIGHT",
+      "q_value": 0.6619415618897226,
+      "confidence": 0.9840717911720276,
+      "quality": 0.9281760240641906,
+      "loss_history": [
+        0.27533382177352905,
+        0.059512797743082047,
+        0.1644260585308075,
+        0.159673273563385,
+        0.10923998057842255
+      ],
+      "times_seen": 8,
+      "last_loss": 0.10923998057842255,
+      "frozen_at_epoch": null,
+      "correct": true
+    },
+    "21": {
+      "sample_id": "21",
+      "bucket": "FREEZE",
+      "q_value": 0.7604580176087781,
+      "confidence": 0.9850336313247681,
+      "quality": 0.9344462283561115,
+      "loss_history": [
+        0.2308197170495987,
+        0.15664055943489075,
+        0.15664055943489075,
+        0.059512797743082047,
+        0.059512797743082047
+      ],
+      "times_seen": 12,
+      "last_loss": 0.059512797743082047,
+      "frozen_at_epoch": 4,
+      "correct": true
+    },
+    "22": {
+      "sample_id": "22",
+      "bucket": "LIGHT",
+      "q_value": 0.701181069314121,
+      "confidence": 0.992690920829773,
+      "quality": 0.980290046728634,
+      "loss_history": [
+        0.07946889847517014,
+        0.10600818693637848,
+        0.12865415215492249,
+        0.13573642075061798,
+        0.10923998057842255
+      ],
+      "times_seen": 9,
+      "last_loss": 0.10923998057842255,
+      "frozen_at_epoch": null,
+      "correct": true
+    },
+    "23": {
+      "sample_id": "23",
+      "bucket": "LIGHT",
+      "q_value": 0.7294205013465791,
+      "confidence": 0.9616429209709167,
+      "quality": 0.9729962546299235,
+      "loss_history": [
+        0.15399132668972015,
+        0.15399132668972015,
+        0.10600818693637848,
+        0.14357787370681763,
+        0.08830732107162476
+      ],
+      "times_seen": 9,
+      "last_loss": 0.08830732107162476,
+      "frozen_at_epoch": null,
+      "correct": true
+    },
+    "24": {
+      "sample_id": "24",
+      "bucket": "LIGHT",
+      "q_value": 0.6126746640574934,
+      "confidence": 0.977410078048706,
+      "quality": 0.0,
+      "loss_history": [
+        5.435135841369629,
+        0.6174324154853821,
+        0.47500079870224,
+        0.13105152547359467,
+        0.10600818693637848
+      ],
+      "times_seen": 5,
+      "last_loss": 0.10600818693637848,
+      "frozen_at_epoch": null,
+      "correct": true
+    },
+    "25": {
+      "sample_id": "25",
+      "bucket": "LIGHT",
+      "q_value": 0.6156556508627535,
+      "confidence": 0.9871319532394409,
+      "quality": 0.0,
+      "loss_history": [
+        6.788252353668213,
+        0.5707751512527466,
+        0.30352991819381714,
+        0.13105152547359467,
+        0.159673273563385
+      ],
+      "times_seen": 5,
+      "last_loss": 0.159673273563385,
+      "frozen_at_epoch": null,
+      "correct": true
+    },
+    "26": {
+      "sample_id": "26",
+      "bucket": "LIGHT",
+      "q_value": 0.561190965808928,
+      "confidence": 0.9680600762367249,
+      "quality": 0.0,
+      "loss_history": [
+        3.2782514095306396,
+        0.2308197170495987,
+        0.10923998057842255
+      ],
+      "times_seen": 3,
+      "last_loss": 0.10923998057842255,
+      "frozen_at_epoch": null,
+      "correct": true
+    },
+    "27": {
+      "sample_id": "27",
+      "bucket": "LIGHT",
+      "q_value": 0.5145423785747887,
+      "confidence": 0.9605522751808167,
+      "quality": 0.0,
+      "loss_history": [
+        6.6953301429748535,
+        4.310661792755127,
+        0.30352991819381714,
+        0.6242185831069946,
+        0.07946889847517014
+      ],
+      "times_seen": 6,
+      "last_loss": 0.07946889847517014,
+      "frozen_at_epoch": null,
+      "correct": true
+    },
+    "28": {
+      "sample_id": "28",
+      "bucket": "LIGHT",
+      "q_value": 0.5692737975241542,
+      "confidence": 0.9671878814697266,
+      "quality": 0.0,
+      "loss_history": [
+        6.6953301429748535,
+        0.9361730217933655,
+        0.47500079870224,
+        0.47500079870224,
+        0.11914660036563873
+      ],
+      "times_seen": 6,
+      "last_loss": 0.11914660036563873,
+      "frozen_at_epoch": null,
+      "correct": true
+    },
+    "29": {
+      "sample_id": "29",
+      "bucket": "FREEZE",
+      "q_value": 0.7100144520249889,
+      "confidence": 0.9940215349197388,
+      "quality": 0.9586156469475784,
+      "loss_history": [
+        0.1833384931087494,
+        0.10788268595933914,
+        0.14683671295642853,
+        0.059512797743082047,
+        0.1130458191037178
+      ],
+      "times_seen": 6,
+      "last_loss": 0.1130458191037178,
+      "frozen_at_epoch": 4,
+      "correct": true
+    },
+    "30": {
+      "sample_id": "30",
+      "bucket": "FREEZE",
+      "q_value": 0.6428585367731751,
+      "confidence": 0.955763041973114,
+      "quality": 0.6638231461292659,
+      "loss_history": [
+        0.9453660249710083,
+        0.2571844458580017,
+        0.1130458191037178,
+        0.1644260585308075
+      ],
+      "times_seen": 4,
+      "last_loss": 0.1644260585308075,
+      "frozen_at_epoch": 4,
+      "correct": true
+    },
+    "31": {
+      "sample_id": "31",
+      "bucket": "LIGHT",
+      "q_value": 0.5351036875128747,
+      "confidence": 0.9483965635299683,
+      "quality": 0.0,
+      "loss_history": [
+        5.435135841369629,
+        1.5259771347045898,
+        0.9453660249710083,
+        0.4709815979003906
+      ],
+      "times_seen": 4,
+      "last_loss": 0.4709815979003906,
+      "frozen_at_epoch": null,
+      "correct": true
+    },
+    "32": {
+      "sample_id": "32",
+      "bucket": "LIGHT",
+      "q_value": 0.5382254600524903,
+      "confidence": 0.9069964289665222,
+      "quality": 1.0,
+      "loss_history": [
+        0.4709815979003906
+      ],
+      "times_seen": 1,
+      "last_loss": 0.4709815979003906,
+      "frozen_at_epoch": null,
+      "correct": true
+    },
+    "33": {
+      "sample_id": "33",
+      "bucket": "LIGHT",
+      "q_value": 0.5403147731983783,
+      "confidence": 0.9797630310058594,
+      "quality": 0.0,
+      "loss_history": [
+        5.435135841369629,
+        1.5259771347045898,
+        0.4468819797039032,
+        0.12865415215492249,
+        0.11914660036563873
+      ],
+      "times_seen": 7,
+      "last_loss": 0.11914660036563873,
+      "frozen_at_epoch": null,
+      "correct": true
+    },
+    "34": {
+      "sample_id": "34",
+      "bucket": "LIGHT",
+      "q_value": 0.5439663610041142,
+      "confidence": 0.9330735802650452,
+      "quality": 0.0,
+      "loss_history": [
+        6.788252353668213,
+        1.5259771347045898,
+        0.5091074109077454,
+        0.5091074109077454
+      ],
+      "times_seen": 4,
+      "last_loss": 0.5091074109077454,
+      "frozen_at_epoch": null,
+      "correct": true
+    },
+    "35": {
+      "sample_id": "35",
+      "bucket": "LIGHT",
+      "q_value": 0.6207374780446293,
+      "confidence": 0.9880861639976501,
+      "quality": 0.6752988666061819,
+      "loss_history": [
+        0.9453660249710083,
+        0.8888990879058838,
+        0.5674073696136475,
+        0.12865415215492249
+      ],
+      "times_seen": 4,
+      "last_loss": 0.12865415215492249,
+      "frozen_at_epoch": null,
+      "correct": true
+    },
+    "36": {
+      "sample_id": "36",
+      "bucket": "LIGHT",
+      "q_value": 0.5843900657445192,
+      "confidence": 0.980720043182373,
+      "quality": 0.9267700836062431,
+      "loss_history": [
+        0.3004511594772339,
+        0.15399132668972015
+      ],
+      "times_seen": 2,
+      "last_loss": 0.15399132668972015,
+      "frozen_at_epoch": null,
+      "correct": true
+    },
+    "37": {
+      "sample_id": "37",
+      "bucket": "LIGHT",
+      "q_value": 0.6561068523555996,
+      "confidence": 0.9823989868164062,
+      "quality": 0.5261558808847832,
+      "loss_history": [
+        1.2632335424423218,
+        0.9453660249710083,
+        0.1833384931087494,
+        0.159673273563385,
+        0.13573642075061798
+      ],
+      "times_seen": 5,
+      "last_loss": 0.13573642075061798,
+      "frozen_at_epoch": null,
+      "correct": true
+    },
+    "38": {
+      "sample_id": "38",
+      "bucket": "LIGHT",
+      "q_value": 0.4983139291435481,
+      "confidence": 0.940053403377533,
+      "quality": 0.0,
+      "loss_history": [
+        6.6953301429748535,
+        6.788252353668213,
+        0.4890659749507904,
+        0.34928345680236816
+      ],
+      "times_seen": 4,
+      "last_loss": 0.34928345680236816,
+      "frozen_at_epoch": null,
+      "correct": true
+    },
+    "39": {
+      "sample_id": "39",
+      "bucket": "LIGHT",
+      "q_value": 0.6802903306865045,
+      "confidence": 0.9682636260986328,
+      "quality": 0.8535785785793114,
+      "loss_history": [
+        0.4890659749507904,
+        0.3004511594772339,
+        0.10600818693637848,
+        0.14357787370681763,
+        0.11914660036563873
+      ],
+      "times_seen": 9,
+      "last_loss": 0.11914660036563873,
+      "frozen_at_epoch": null,
+      "correct": true
+    },
+    "40": {
+      "sample_id": "40",
+      "bucket": "FREEZE",
+      "q_value": 0.6487209432952107,
+      "confidence": 0.8954845666885376,
+      "quality": 0.722157697319712,
+      "loss_history": [
+        0.9361730217933655,
+        0.8888990879058838,
+        0.5091074109077454,
+        0.2958928346633911,
+        0.3004511594772339
+      ],
+      "times_seen": 5,
+      "last_loss": 0.3004511594772339,
+      "frozen_at_epoch": 3,
+      "correct": true
+    },
+    "41": {
+      "sample_id": "41",
+      "bucket": "FOCUS",
+      "q_value": 0.546748261526227,
+      "confidence": 0.9692699313163757,
+      "quality": 1.0,
+      "loss_history": [
+        0.1300695389509201
+      ],
+      "times_seen": 1,
+      "last_loss": 0.1300695389509201,
+      "frozen_at_epoch": null,
+      "correct": true
+    },
+    "42": {
+      "sample_id": "42",
+      "bucket": "LIGHT",
+      "q_value": 0.5084371538490058,
+      "confidence": 0.9878746271133423,
+      "quality": 0.0,
+      "loss_history": [
+        7.809291839599609,
+        5.884615421295166,
+        0.29485249519348145,
+        0.11914660036563873
+      ],
+      "times_seen": 4,
+      "last_loss": 0.11914660036563873,
+      "frozen_at_epoch": null,
+      "correct": true
+    },
+    "43": {
+      "sample_id": "43",
+      "bucket": "FREEZE",
+      "q_value": 0.6447188449710608,
+      "confidence": 0.9630483984947205,
+      "quality": 0.8074289989501326,
+      "loss_history": [
+        0.5674073696136475,
+        0.4890659749507904,
+        0.14736230671405792,
+        0.14683671295642853
+      ],
+      "times_seen": 4,
+      "last_loss": 0.14683671295642853,
+      "frozen_at_epoch": 4,
+      "correct": true
+    },
+    "44": {
+      "sample_id": "44",
+      "bucket": "LIGHT",
+      "q_value": 0.6597026960905942,
+      "confidence": 0.9705603122711182,
+      "quality": 0.988718732572132,
+      "loss_history": [
+        0.15664055943489075,
+        0.1644260585308075,
+        0.1307286024093628,
+        0.15399132668972015,
+        0.15399132668972015
+      ],
+      "times_seen": 6,
+      "last_loss": 0.15399132668972015,
+      "frozen_at_epoch": null,
+      "correct": true
+    },
+    "45": {
+      "sample_id": "45",
+      "bucket": "FREEZE",
+      "q_value": 0.6271526646837593,
+      "confidence": 0.9958177804946899,
+      "quality": 0.7620434762575856,
+      "loss_history": [
+        0.9361730217933655,
+        0.5091074109077454,
+        0.4468819797039032,
+        0.29485249519348145
+      ],
+      "times_seen": 4,
+      "last_loss": 0.29485249519348145,
+      "frozen_at_epoch": 3,
+      "correct": true
+    },
+    "46": {
+      "sample_id": "46",
+      "bucket": "LIGHT",
+      "q_value": 0.5807627771347762,
+      "confidence": 0.9925891757011414,
+      "quality": 0.0,
+      "loss_history": [
+        2.41072416305542,
+        0.1307286024093628,
+        0.11914660036563873
+      ],
+      "times_seen": 3,
+      "last_loss": 0.11914660036563873,
+      "frozen_at_epoch": null,
+      "correct": true
+    },
+    "47": {
+      "sample_id": "47",
+      "bucket": "LIGHT",
+      "q_value": 0.5446543997600675,
+      "confidence": 0.9821502566337585,
+      "quality": 0.0,
+      "loss_history": [
+        7.809291839599609,
+        0.34928345680236816,
+        0.07946889847517014
+      ],
+      "times_seen": 3,
+      "last_loss": 0.07946889847517014,
+      "frozen_at_epoch": null,
+      "correct": true
+    },
+    "48": {
+      "sample_id": "48",
+      "bucket": "LIGHT",
+      "q_value": 0.6735855760485828,
+      "confidence": 0.9766939878463745,
+      "quality": 0.4513001954880027,
+      "loss_history": [
+        1.5259771347045898,
+        0.1833384931087494,
+        0.15664055943489075,
+        0.14357787370681763,
+        0.13573642075061798
+      ],
+      "times_seen": 6,
+      "last_loss": 0.13573642075061798,
+      "frozen_at_epoch": null,
+      "correct": true
+    },
+    "49": {
+      "sample_id": "49",
+      "bucket": "LIGHT",
+      "q_value": 0.6079587835669518,
+      "confidence": 0.9974982738494873,
+      "quality": 0.7923714038034875,
+      "loss_history": [
+        0.5707751512527466,
+        0.5674073696136475,
+        0.12865415215492249
+      ],
+      "times_seen": 3,
+      "last_loss": 0.12865415215492249,
+      "frozen_at_epoch": null,
+      "correct": true
+    },
+    "50": {
+      "sample_id": "50",
+      "bucket": "HARD",
+      "q_value": 0.6021533772387655,
+      "confidence": 0.9909547567367554,
+      "quality": 0.0,
+      "loss_history": [
+        3.2782514095306396,
+        0.6242185831069946,
+        0.07946889847517014,
+        0.1300695389509201,
+        0.13573642075061798
+      ],
+      "times_seen": 6,
+      "last_loss": 0.13573642075061798,
+      "frozen_at_epoch": null,
+      "correct": true
+    },
+    "51": {
+      "sample_id": "51",
+      "bucket": "LIGHT",
+      "q_value": 0.6464839853316546,
+      "confidence": 0.981009840965271,
+      "quality": 0.8003679623685326,
+      "loss_history": [
+        0.4709815979003906,
+        0.5558843016624451,
+        0.12865415215492249,
+        0.10923998057842255
+      ],
+      "times_seen": 4,
+      "last_loss": 0.10923998057842255,
+      "frozen_at_epoch": null,
+      "correct": true
+    },
+    "52": {
+      "sample_id": "52",
+      "bucket": "LIGHT",
+      "q_value": 0.5573726771354676,
+      "confidence": 0.9690528512001038,
+      "quality": 0.0,
+      "loss_history": [
+        5.884615421295166,
+        1.2632335424423218,
+        0.5558843016624451,
+        0.14357787370681763
+      ],
+      "times_seen": 4,
+      "last_loss": 0.14357787370681763,
+      "frozen_at_epoch": null,
+      "correct": true
+    },
+    "53": {
+      "sample_id": "53",
+      "bucket": "FREEZE",
+      "q_value": 0.6736070160581887,
+      "confidence": 0.9611924290657043,
+      "quality": 0.8507034246144111,
+      "loss_history": [
+        0.5558843016624451,
+        0.2571844458580017,
+        0.2308197170495987,
+        0.15664055943489075,
+        0.14683671295642853
+      ],
+      "times_seen": 7,
+      "last_loss": 0.14683671295642853,
+      "frozen_at_epoch": 4,
+      "correct": true
+    },
+    "54": {
+      "sample_id": "54",
+      "bucket": "LIGHT",
+      "q_value": 0.5842770922064782,
+      "confidence": 0.9573163986206055,
+      "quality": 0.0,
+      "loss_history": [
+        5.884615421295166,
+        0.39153188467025757,
+        0.159673273563385,
+        0.1300695389509201
+      ],
+      "times_seen": 4,
+      "last_loss": 0.1300695389509201,
+      "frozen_at_epoch": null,
+      "correct": true
+    },
+    "55": {
+      "sample_id": "55",
+      "bucket": "LIGHT",
+      "q_value": 0.4138648157596589,
+      "confidence": 0.8594676852226257,
+      "quality": 0.0,
+      "loss_history": [
+        7.6499433517456055,
+        6.6953301429748535,
+        4.310661792755127,
+        0.5674073696136475
+      ],
+      "times_seen": 4,
+      "last_loss": 0.5674073696136475,
+      "frozen_at_epoch": null,
+      "correct": true
+    },
+    "56": {
+      "sample_id": "56",
+      "bucket": "LIGHT",
+      "q_value": 0.6470659947982985,
+      "confidence": 0.9693565368652344,
+      "quality": 0.8241011991115147,
+      "loss_history": [
+        0.6174324154853821,
+        0.2958928346633911,
+        0.3004511594772339,
+        0.13573642075061798,
+        0.13573642075061798
+      ],
+      "times_seen": 10,
+      "last_loss": 0.13573642075061798,
+      "frozen_at_epoch": null,
+      "correct": true
+    },
+    "57": {
+      "sample_id": "57",
+      "bucket": "LIGHT",
+      "q_value": 0.6197648098909112,
+      "confidence": 0.9629191160202026,
+      "quality": 0.6898204798815006,
+      "loss_history": [
+        0.8888990879058838,
+        0.5707751512527466,
+        0.159673273563385,
+        0.10600818693637848,
+        0.1300695389509201
+      ],
+      "times_seen": 8,
+      "last_loss": 0.1300695389509201,
+      "frozen_at_epoch": null,
+      "correct": true
+    },
+    "58": {
+      "sample_id": "58",
+      "bucket": "FREEZE",
+      "q_value": 0.6058569643497468,
+      "confidence": 0.9418893456459045,
+      "quality": 0.8860737678426465,
+      "loss_history": [
+        0.5707751512527466,
+        0.47500079870224,
+        0.2958928346633911
+      ],
+      "times_seen": 3,
+      "last_loss": 0.2958928346633911,
+      "frozen_at_epoch": 3,
+      "correct": true
+    },
+    "59": {
+      "sample_id": "59",
+      "bucket": "LIGHT",
+      "q_value": 0.5780591205728054,
+      "confidence": 0.9973312616348267,
+      "quality": 0.0,
+      "loss_history": [
+        6.788252353668213,
+        1.2632335424423218,
+        1.0587762594223022,
+        0.6174324154853821,
+        0.10923998057842255
+      ],
+      "times_seen": 5,
+      "last_loss": 0.10923998057842255,
+      "frozen_at_epoch": null,
+      "correct": true
+    },
+    "60": {
+      "sample_id": "60",
+      "bucket": "FOCUS",
+      "q_value": 0.6907181712984667,
+      "confidence": 0.9685922861099243,
+      "quality": 0.9901618786063041,
+      "loss_history": [
+        0.13105152547359467,
+        0.15399132668972015,
+        0.1300695389509201,
+        0.14357787370681763,
+        0.12865415215492249
+      ],
+      "times_seen": 5,
+      "last_loss": 0.12865415215492249,
+      "frozen_at_epoch": null,
+      "correct": true
+    },
+    "61": {
+      "sample_id": "61",
+      "bucket": "FREEZE",
+      "q_value": 0.6671816098324015,
+      "confidence": 0.9740389585494995,
+      "quality": 0.8945095300251122,
+      "loss_history": [
+        0.39153188467025757,
+        0.39153188467025757,
+        0.2571844458580017,
+        0.2308197170495987,
+        0.1130458191037178
+      ],
+      "times_seen": 10,
+      "last_loss": 0.1130458191037178,
+      "frozen_at_epoch": 4,
+      "correct": true
+    },
+    "62": {
+      "sample_id": "62",
+      "bucket": "FREEZE",
+      "q_value": 0.6602822341937573,
+      "confidence": 0.9851446747779846,
+      "quality": 0.9696975201514321,
+      "loss_history": [
+        0.1833384931087494,
+        0.10788268595933914,
+        0.14736230671405792,
+        0.1130458191037178
+      ],
+      "times_seen": 4,
+      "last_loss": 0.1130458191037178,
+      "frozen_at_epoch": 4,
+      "correct": true
+    },
+    "63": {
+      "sample_id": "63",
+      "bucket": "LIGHT",
+      "q_value": 0.5087459049031139,
+      "confidence": 0.9614375829696655,
+      "quality": 0.0,
+      "loss_history": [
+        7.752788543701172,
+        5.884615421295166,
+        0.2308197170495987,
+        0.1644260585308075
+      ],
+      "times_seen": 4,
+      "last_loss": 0.1644260585308075,
+      "frozen_at_epoch": null,
+      "correct": true
+    },
+    "64": {
+      "sample_id": "64",
+      "bucket": "LIGHT",
+      "q_value": 0.7162829359290345,
+      "confidence": 0.9874546527862549,
+      "quality": 0.9054035761391906,
+      "loss_history": [
+        0.34928345680236816,
+        0.3004511594772339,
+        0.159673273563385,
+        0.1300695389509201,
+        0.11914660036563873
+      ],
+      "times_seen": 8,
+      "last_loss": 0.11914660036563873,
+      "frozen_at_epoch": null,
+      "correct": true
+    },
+    "65": {
+      "sample_id": "65",
+      "bucket": "LIGHT",
+      "q_value": 0.5760224588450045,
+      "confidence": 0.9694710969924927,
+      "quality": 0.0,
+      "loss_history": [
+        5.435135841369629,
+        0.9361730217933655,
+        0.059512797743082047,
+        0.10923998057842255
+      ],
+      "times_seen": 4,
+      "last_loss": 0.10923998057842255,
+      "frozen_at_epoch": null,
+      "correct": true
+    },
+    "66": {
+      "sample_id": "66",
+      "bucket": "FREEZE",
+      "q_value": 0.6493207224667072,
+      "confidence": 0.9780840873718262,
+      "quality": 0.8207021125648536,
+      "loss_history": [
+        0.5674073696136475,
+        0.30352991819381714,
+        0.14736230671405792,
+        0.1130458191037178
+      ],
+      "times_seen": 4,
+      "last_loss": 0.1130458191037178,
+      "frozen_at_epoch": 4,
+      "correct": true
+    },
+    "67": {
+      "sample_id": "67",
+      "bucket": "FREEZE",
+      "q_value": 0.6167189127057792,
+      "confidence": 0.9675360321998596,
+      "quality": 0.8545437576503494,
+      "loss_history": [
+        0.4890659749507904,
+        0.2308197170495987,
+        0.14736230671405792
+      ],
+      "times_seen": 3,
+      "last_loss": 0.14736230671405792,
+      "frozen_at_epoch": 4,
+      "correct": true
+    },
+    "68": {
+      "sample_id": "68",
+      "bucket": "LIGHT",
+      "q_value": 0.6096695964783431,
+      "confidence": 0.9735251069068909,
+      "quality": 0.8196011546852044,
+      "loss_history": [
+        0.5549122095108032,
+        0.4890659749507904,
+        0.14357787370681763
+      ],
+      "times_seen": 3,
+      "last_loss": 0.14357787370681763,
+      "frozen_at_epoch": null,
+      "correct": true
+    },
+    "69": {
+      "sample_id": "69",
+      "bucket": "LIGHT",
+      "q_value": 0.6265987296979876,
+      "confidence": 0.9964563250541687,
+      "quality": 0.9026232810457516,
+      "loss_history": [
+        0.27533382177352905,
+        0.059512797743082047,
+        0.07946889847517014
+      ],
+      "times_seen": 3,
+      "last_loss": 0.07946889847517014,
+      "frozen_at_epoch": null,
+      "correct": true
+    },
+    "70": {
+      "sample_id": "70",
+      "bucket": "HARD",
+      "q_value": 0.6859973296989501,
+      "confidence": 0.9887944459915161,
+      "quality": 0.9238870934434822,
+      "loss_history": [
+        0.29485249519348145,
+        0.27533382177352905,
+        0.15399132668972015,
+        0.13573642075061798,
+        0.10923998057842255
+      ],
+      "times_seen": 5,
+      "last_loss": 0.10923998057842255,
+      "frozen_at_epoch": null,
+      "correct": true
+    },
+    "71": {
+      "sample_id": "71",
+      "bucket": "LIGHT",
+      "q_value": 0.6651966032809019,
+      "confidence": 0.9459749460220337,
+      "quality": 0.6562706800122127,
+      "loss_history": [
+        1.0587762594223022,
+        0.4709815979003906,
+        0.39153188467025757,
+        0.13105152547359467,
+        0.10923998057842255
+      ],
+      "times_seen": 5,
+      "last_loss": 0.10923998057842255,
+      "frozen_at_epoch": null,
+      "correct": true
+    },
+    "72": {
+      "sample_id": "72",
+      "bucket": "LIGHT",
+      "q_value": 0.5424117520451546,
+      "confidence": 0.9790729284286499,
+      "quality": 1.0,
+      "loss_history": [
+        0.30352991819381714
+      ],
+      "times_seen": 1,
+      "last_loss": 0.30352991819381714,
+      "frozen_at_epoch": null,
+      "correct": true
+    },
+    "73": {
+      "sample_id": "73",
+      "bucket": "FREEZE",
+      "q_value": 0.6265783657982947,
+      "confidence": 0.9195206165313721,
+      "quality": 0.6451163602980343,
+      "loss_history": [
+        1.2632335424423218,
+        0.9453660249710083,
+        1.0587762594223022,
+        0.4468819797039032,
+        0.34928345680236816
+      ],
+      "times_seen": 5,
+      "last_loss": 0.34928345680236816,
+      "frozen_at_epoch": 3,
+      "correct": true
+    },
+    "74": {
+      "sample_id": "74",
+      "bucket": "LIGHT",
+      "q_value": 0.5997839986532927,
+      "confidence": 0.9528787732124329,
+      "quality": 0.6828622699641402,
+      "loss_history": [
+        0.9361730217933655,
+        0.5674073696136475,
+        0.159673273563385
+      ],
+      "times_seen": 3,
+      "last_loss": 0.159673273563385,
+      "frozen_at_epoch": null,
+      "correct": true
+    },
+    "75": {
+      "sample_id": "75",
+      "bucket": "LIGHT",
+      "q_value": 0.5828335533320905,
+      "confidence": 0.942192554473877,
+      "quality": 0.0,
+      "loss_history": [
+        7.6499433517456055,
+        0.2571844458580017,
+        0.1833384931087494,
+        0.27533382177352905
+      ],
+      "times_seen": 4,
+      "last_loss": 0.27533382177352905,
+      "frozen_at_epoch": null,
+      "correct": true
+    },
+    "76": {
+      "sample_id": "76",
+      "bucket": "LIGHT",
+      "q_value": 0.5236031076860428,
+      "confidence": 0.905411958694458,
+      "quality": 0.0,
+      "loss_history": [
+        6.6953301429748535,
+        6.788252353668213,
+        0.8888990879058838,
+        0.5674073696136475,
+        0.47500079870224
+      ],
+      "times_seen": 5,
+      "last_loss": 0.47500079870224,
+      "frozen_at_epoch": null,
+      "correct": true
+    },
+    "77": {
+      "sample_id": "77",
+      "bucket": "LIGHT",
+      "q_value": 0.6029667453467846,
+      "confidence": 0.980591893196106,
+      "quality": 0.6653819590994915,
+      "loss_history": [
+        0.9361730217933655,
+        0.4709815979003906,
+        0.11914660036563873
+      ],
+      "times_seen": 3,
+      "last_loss": 0.11914660036563873,
+      "frozen_at_epoch": null,
+      "correct": true
+    },
+    "78": {
+      "sample_id": "78",
+      "bucket": "LIGHT",
+      "q_value": 0.5220572149455548,
+      "confidence": 0.886431097984314,
+      "quality": 0.0,
+      "loss_history": [
+        7.6499433517456055,
+        0.9453660249710083,
+        0.4468819797039032
+      ],
+      "times_seen": 3,
+      "last_loss": 0.4468819797039032,
+      "frozen_at_epoch": null,
+      "correct": true
+    },
+    "79": {
+      "sample_id": "79",
+      "bucket": "FREEZE",
+      "q_value": 0.6146095439642668,
+      "confidence": 0.9699339866638184,
+      "quality": 0.6290581650496141,
+      "loss_history": [
+        1.2632335424423218,
+        0.8232518434524536,
+        0.34928345680236816,
+        0.39153188467025757
+      ],
+      "times_seen": 4,
+      "last_loss": 0.39153188467025757,
+      "frozen_at_epoch": 3,
+      "correct": true
+    },
+    "80": {
+      "sample_id": "80",
+      "bucket": "FREEZE",
+      "q_value": 0.6531288662486691,
+      "confidence": 0.9597509503364563,
+      "quality": 0.881116664547253,
+      "loss_history": [
+        0.4468819797039032,
+        0.34928345680236816,
+        0.39153188467025757,
+        0.39153188467025757,
+        0.10788268595933914
+      ],
+      "times_seen": 8,
+      "last_loss": 0.10788268595933914,
+      "frozen_at_epoch": 4,
+      "correct": true
+    },
+    "81": {
+      "sample_id": "81",
+      "bucket": "LIGHT",
+      "q_value": 0.6150615277975797,
+      "confidence": 0.9863374829292297,
+      "quality": 0.4461424885700602,
+      "loss_history": [
+        1.5259771347045898,
+        0.9453660249710083,
+        0.2958928346633911,
+        0.13105152547359467
+      ],
+      "times_seen": 4,
+      "last_loss": 0.13105152547359467,
+      "frozen_at_epoch": null,
+      "correct": true
+    },
+    "82": {
+      "sample_id": "82",
+      "bucket": "FREEZE",
+      "q_value": 0.7270569798482301,
+      "confidence": 0.9675595164299011,
+      "quality": 0.9102349445281522,
+      "loss_history": [
+        0.34928345680236816,
+        0.10788268595933914,
+        0.10788268595933914,
+        0.14683671295642853,
+        0.1644260585308075
+      ],
+      "times_seen": 7,
+      "last_loss": 0.1644260585308075,
+      "frozen_at_epoch": 4,
+      "correct": true
+    },
+    "83": {
+      "sample_id": "83",
+      "bucket": "LIGHT",
+      "q_value": 0.6568951250646391,
+      "confidence": 0.9836177825927734,
+      "quality": 0.8513395032156208,
+      "loss_history": [
+        0.4890659749507904,
+        0.3004511594772339,
+        0.15399132668972015,
+        0.07946889847517014,
+        0.1300695389509201
+      ],
+      "times_seen": 9,
+      "last_loss": 0.1300695389509201,
+      "frozen_at_epoch": null,
+      "correct": true
+    },
+    "84": {
+      "sample_id": "84",
+      "bucket": "LIGHT",
+      "q_value": 0.5343129968345166,
+      "confidence": 0.9143039584159851,
+      "quality": 0.0,
+      "loss_history": [
+        6.6953301429748535,
+        0.5091074109077454,
+        0.34928345680236816
+      ],
+      "times_seen": 3,
+      "last_loss": 0.34928345680236816,
+      "frozen_at_epoch": null,
+      "correct": true
+    },
+    "85": {
+      "sample_id": "85",
+      "bucket": "LIGHT",
+      "q_value": 0.6264441433428601,
+      "confidence": 0.9697248935699463,
+      "quality": 0.0,
+      "loss_history": [
+        7.809291839599609,
+        0.2308197170495987,
+        0.059512797743082047,
+        0.1644260585308075,
+        0.14357787370681763
+      ],
+      "times_seen": 5,
+      "last_loss": 0.14357787370681763,
+      "frozen_at_epoch": null,
+      "correct": true
+    },
+    "86": {
+      "sample_id": "86",
+      "bucket": "FREEZE",
+      "q_value": 0.712191370505497,
+      "confidence": 0.9762842655181885,
+      "quality": 0.945471169470831,
+      "loss_history": [
+        0.1833384931087494,
+        0.27533382177352905,
+        0.14683671295642853,
+        0.1130458191037178,
+        0.1644260585308075
+      ],
+      "times_seen": 6,
+      "last_loss": 0.1644260585308075,
+      "frozen_at_epoch": 4,
+      "correct": true
+    },
+    "87": {
+      "sample_id": "87",
+      "bucket": "FREEZE",
+      "q_value": 0.6544301607085933,
+      "confidence": 0.9566546082496643,
+      "quality": 0.7218982555181452,
+      "loss_history": [
+        0.8888990879058838,
+        0.2571844458580017,
+        0.27533382177352905,
+        0.14736230671405792,
+        0.14683671295642853
+      ],
+      "times_seen": 8,
+      "last_loss": 0.14683671295642853,
+      "frozen_at_epoch": 4,
+      "correct": true
+    },
+    "88": {
+      "sample_id": "88",
+      "bucket": "LIGHT",
+      "q_value": 0.6335542468111516,
+      "confidence": 0.9774752855300903,
+      "quality": 0.8261869347914821,
+      "loss_history": [
+        0.5707751512527466,
+        0.6174324154853821,
+        0.5091074109077454,
+        0.3004511594772339,
+        0.159673273563385
+      ],
+      "times_seen": 6,
+      "last_loss": 0.159673273563385,
+      "frozen_at_epoch": null,
+      "correct": true
+    },
+    "89": {
+      "sample_id": "89",
+      "bucket": "LIGHT",
+      "q_value": 0.6607887290369646,
+      "confidence": 0.9668121337890625,
+      "quality": 0.9364838690269217,
+      "loss_history": [
+        0.2571844458580017,
+        0.14683671295642853,
+        0.059512797743082047,
+        0.13105152547359467,
+        0.13573642075061798
+      ],
+      "times_seen": 6,
+      "last_loss": 0.13573642075061798,
+      "frozen_at_epoch": null,
+      "correct": true
+    }
+  },
+  "partition_history": [
+    {
+      "total": 90,
+      "freeze_count": 0,
+      "light_count": 0,
+      "focus_count": 90,
+      "hard_count": 0
+    },
+    {
+      "total": 90,
+      "freeze_count": 0,
+      "light_count": 0,
+      "focus_count": 61,
+      "hard_count": 29
+    },
+    {
+      "total": 90,
+      "freeze_count": 0,
+      "light_count": 12,
+      "focus_count": 19,
+      "hard_count": 59
+    },
+    {
+      "total": 90,
+      "freeze_count": 6,
+      "light_count": 47,
+      "focus_count": 9,
+      "hard_count": 28
+    },
+    {
+      "total": 90,
+      "freeze_count": 23,
+      "light_count": 62,
+      "focus_count": 3,
+      "hard_count": 2
+    }
+  ],
+  "global_step": 60,
+  "current_epoch": 4
+}

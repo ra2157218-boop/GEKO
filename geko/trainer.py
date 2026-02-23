@@ -16,8 +16,10 @@ Key Features:
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader, Dataset, WeightedRandomSampler
-from typing import Dict, List, Optional, Callable, Any, Union
-from dataclasses import dataclass
+from torch.optim.lr_scheduler import LambdaLR
+from collections import deque
+from typing import Dict, List, Optional, Callable, Any
+from dataclasses import dataclass, field
 import json
 import os
 from tqdm import tqdm
@@ -25,6 +27,47 @@ from tqdm import tqdm
 from .core import Bucket, SampleState, GEKOConfig
 from .partitioner import SamplePartitioner, PartitionStats
 from .curriculum import MountainCurriculum, CurriculumPhase
+
+
+class GEKODataset(Dataset):
+    """
+    Wraps any Dataset to inject a global `sample_id` into each item.
+
+    This ensures the trainer can track per-sample learning state correctly
+    regardless of batch ordering or shuffling.
+    """
+
+    def __init__(self, dataset: Dataset):
+        self.dataset = dataset
+        # Probe the first item immediately so users get a clear error at
+        # construction time rather than a cryptic KeyError inside the training loop.
+        if len(dataset) > 0:
+            sample = dataset[0]
+            if not isinstance(sample, dict):
+                raise TypeError(
+                    f"GEKOTrainer requires your dataset's __getitem__ to return a dict "
+                    f"(got {type(sample).__name__}). Each item must include at minimum an "
+                    f"'input_ids' key. Wrap your dataset so it returns a dict, e.g.:\n\n"
+                    f"    def __getitem__(self, idx):\n"
+                    f"        x, y = self.data[idx]\n"
+                    f"        return {{'input_ids': x, 'labels': y}}"
+                )
+            if 'input_ids' not in sample:
+                raise TypeError(
+                    "Each dataset item must include an 'input_ids' key. "
+                    "Your dataset's __getitem__ should return a dict with at least 'input_ids', e.g.:\n\n"
+                    "    def __getitem__(self, idx):\n"
+                    "        x, y = self.data[idx]\n"
+                    "        return {'input_ids': x, 'labels': y}"
+                )
+
+    def __len__(self) -> int:
+        return len(self.dataset)
+
+    def __getitem__(self, idx: int):
+        item = self.dataset[idx]
+        item['sample_id'] = str(idx)
+        return item
 
 
 @dataclass
@@ -40,10 +83,14 @@ class GEKOTrainingArgs:
     save_steps: int = 1000
     eval_steps: int = 500
     max_grad_norm: float = 1.0
-    fp16: bool = True
+    # Auto-detect GPU: True on CUDA machines, False on CPU-only (e.g. Mac laptops)
+    fp16: bool = field(default_factory=lambda: torch.cuda.is_available())
     gradient_accumulation_steps: int = 1
-    dataloader_num_workers: int = 4
+    # Default 0 is safe on all platforms (macOS multiprocessing issues with >0)
+    dataloader_num_workers: int = 0
     seed: int = 42
+    # Set False if you want to manage checkpointing yourself
+    save_at_end: bool = True
 
 
 class GEKOTrainer:
@@ -81,8 +128,8 @@ class GEKOTrainer:
     def __init__(
         self,
         model: nn.Module,
-        tokenizer: Any,
         train_dataset: Dataset,
+        tokenizer: Optional[Any] = None,
         eval_dataset: Optional[Dataset] = None,
         config: Optional[GEKOConfig] = None,
         args: Optional[GEKOTrainingArgs] = None,
@@ -94,18 +141,29 @@ class GEKOTrainer:
 
         Args:
             model: Any PyTorch model (HuggingFace, custom, etc.)
-            tokenizer: Tokenizer for the model
-            train_dataset: Training dataset
-            eval_dataset: Optional evaluation dataset
+            train_dataset: Training dataset (must return dicts with at least 'input_ids')
+            tokenizer: Optional tokenizer (stored for user convenience; not called internally)
+            eval_dataset: Optional evaluation dataset (same dict structure as training; see README)
             config: GEKO configuration
             args: Training arguments
-            compute_confidence: Custom function to compute model confidence
-            compute_correctness: Custom function to check if prediction is correct
+            compute_confidence: Optional function(outputs, batch) → Tensor[batch_size].
+                Defaults to max softmax probability.
+            compute_correctness: Optional function(outputs, batch) → BoolTensor[batch_size].
+                Default: per-sample when model returns 1D loss, else batch-level (one value per batch).
+                When the model returns a scalar loss, override this for true per-sample bucketing.
         """
         self.model = model
-        self.tokenizer = tokenizer
-        self.train_dataset = train_dataset
+        self.tokenizer = tokenizer  # stored for user convenience; not called internally
+        # Wrap dataset to inject global sample IDs into each batch
+        self.train_dataset = GEKODataset(train_dataset)
         self.eval_dataset = eval_dataset
+        if eval_dataset is not None and len(eval_dataset) > 0:
+            sample = eval_dataset[0]
+            if not isinstance(sample, dict):
+                raise TypeError(
+                    "eval_dataset must return dicts (same structure as training). "
+                    f"Got {type(sample).__name__}. Ensure __getitem__ returns a dict with model input keys."
+                )
         self.config = config or GEKOConfig()
         self.args = args or GEKOTrainingArgs()
 
@@ -116,7 +174,7 @@ class GEKOTrainer:
         # GEKO components
         self.partitioner = SamplePartitioner(self.config)
         self.curriculum = MountainCurriculum(
-            total_samples=len(train_dataset) * self.args.num_epochs,
+            total_samples=len(self.train_dataset) * self.args.num_epochs,
             config=self.config
         ) if self.config.use_curriculum else None
 
@@ -128,9 +186,18 @@ class GEKOTrainer:
         self.global_step = 0
         self.current_epoch = 0
         self.partition_history: List[PartitionStats] = []
+        self._warned_batch_level_correctness = False
 
         # Device
         self.device = next(model.parameters()).device
+
+    @staticmethod
+    def _get_batch_size(batch: dict) -> int:
+        """Infer batch size from the first tensor in the batch."""
+        for v in batch.values():
+            if isinstance(v, torch.Tensor):
+                return v.size(0)
+        return 1
 
     def _init_sample_states(self):
         """Initialize sample states for all samples."""
@@ -144,50 +211,61 @@ class GEKOTrainer:
 
     def _default_confidence(
         self,
-        model: nn.Module,
-        batch: Dict[str, torch.Tensor]
+        outputs: Any,
+        batch: Dict[str, torch.Tensor],
     ) -> torch.Tensor:
         """
-        Default confidence computation using softmax probability.
+        Default confidence: max softmax probability over the vocabulary.
 
-        Override this for custom confidence metrics.
+        Extracted directly from the training forward pass outputs — no extra
+        forward pass needed.
+
+        Returns a 1-D tensor of shape [batch_size].
+        Override compute_confidence with a function(outputs, batch) → Tensor
+        to use a custom confidence metric.
         """
-        with torch.no_grad():
-            outputs = model(**batch)
-            logits = outputs.logits if hasattr(outputs, 'logits') else outputs[0]
-
-            # Get probability of predicted token
-            probs = torch.softmax(logits, dim=-1)
+        if hasattr(outputs, 'logits'):
+            # .float() avoids half-precision overflow in softmax
+            probs = torch.softmax(outputs.logits.float(), dim=-1)
             max_probs = probs.max(dim=-1).values
-
-            # Average confidence across sequence
-            confidence = max_probs.mean(dim=-1)
-
-        return confidence
+            # Average across sequence length → shape [batch_size]
+            return max_probs.mean(dim=-1) if max_probs.dim() > 1 else max_probs
+        # Fallback if model doesn't expose logits (e.g. custom architectures)
+        batch_size = self._get_batch_size(batch)
+        return torch.full((batch_size,), 0.5, device=self.device)
 
     def _default_correctness(
         self,
-        model: nn.Module,
+        outputs: Any,
         batch: Dict[str, torch.Tensor],
-        threshold: float = 0.5
+        threshold: float = 0.5,
     ) -> torch.Tensor:
         """
-        Default correctness check using loss threshold.
+        Default correctness: per-sample when model returns 1D loss, else batch-level.
 
-        Override this for task-specific correctness.
+        When the model returns a scalar loss, every sample in the batch gets the same
+        correctness (batch-level). For true per-sample bucketing, override
+        compute_correctness with a function(outputs, batch) → BoolTensor[batch_size].
+
+        Returns a bool Tensor of shape [batch_size].
         """
-        with torch.no_grad():
-            outputs = model(**batch)
-            loss = outputs.loss if hasattr(outputs, 'loss') else outputs[0]
-
-            # Sample is "correct" if loss is below threshold
-            if loss.dim() == 0:
-                # Single loss value
-                correct = (loss < threshold).unsqueeze(0)
-            else:
-                correct = loss < threshold
-
-        return correct
+        batch_size = self._get_batch_size(batch)
+        loss = outputs.loss if hasattr(outputs, 'loss') else outputs[0]
+        if loss.dim() == 1 and loss.numel() == batch_size:
+            return (loss < threshold).to(dtype=torch.bool, device=self.device)
+        # Batch-level fallback: one value for whole batch
+        if not self._warned_batch_level_correctness:
+            print(
+                "[GEKO] Using batch-level correctness (model returns scalar loss). "
+                "For per-sample bucketing, override compute_correctness; see API Reference."
+            )
+            self._warned_batch_level_correctness = True
+        loss_val = loss.mean().item() if loss.dim() > 0 else loss.item()
+        return torch.tensor(
+            [loss_val < threshold] * batch_size,
+            dtype=torch.bool,
+            device=self.device,
+        )
 
     def _get_sample_weights(self) -> List[float]:
         """Get sampling weights based on bucket assignments."""
@@ -195,6 +273,12 @@ class GEKOTrainer:
         for idx in range(len(self.train_dataset)):
             sample_id = str(idx)
             state = self.sample_states[sample_id]
+
+            # Exclude samples that have been trained on too many times
+            if state.times_seen >= self.config.max_times_seen:
+                weights.append(0.0)
+                continue
+
             weight = self.config.get_bucket_weight(state.bucket)
 
             # Apply curriculum adjustment
@@ -204,14 +288,20 @@ class GEKOTrainer:
                 if bucket_idx >= 0:
                     weight = curr_weights[bucket_idx]
 
-            weights.append(max(weight, 0.001))  # Minimum weight to avoid zero
+            # FREEZE samples get weight 0 — excluded from sampling
+            weights.append(float(weight))
 
         return weights
 
     def _create_dataloader(self, weighted: bool = True) -> DataLoader:
         """Create dataloader with GEKO-weighted sampling."""
+        pin = (self.device.type == 'cuda')
         if weighted:
             weights = self._get_sample_weights()
+            # If every sample is FREEZE, all weights are 0 — WeightedRandomSampler would
+            # raise ValueError. Fall back to uniform; training will auto-stop next repartition.
+            if sum(weights) == 0:
+                weights = [1.0] * len(self.train_dataset)
             sampler = WeightedRandomSampler(
                 weights=weights,
                 num_samples=len(self.train_dataset),
@@ -222,7 +312,7 @@ class GEKOTrainer:
                 batch_size=self.args.batch_size,
                 sampler=sampler,
                 num_workers=self.args.dataloader_num_workers,
-                pin_memory=True,
+                pin_memory=pin,
             )
         else:
             return DataLoader(
@@ -230,7 +320,7 @@ class GEKOTrainer:
                 batch_size=self.args.batch_size,
                 shuffle=True,
                 num_workers=self.args.dataloader_num_workers,
-                pin_memory=True,
+                pin_memory=pin,
             )
 
     def _update_sample_states(
@@ -241,13 +331,20 @@ class GEKOTrainer:
         corrects: torch.Tensor
     ):
         """Update sample states after a training step."""
+        lr = self.config.q_value_lr
+        loss_scale = self.config.q_value_loss_scale
         for i, sample_id in enumerate(sample_ids):
             if sample_id in self.sample_states:
+                loss_val = losses[i].item() if losses.dim() > 0 else losses.item()
+                conf_val = confidences[i].item() if confidences.dim() > 0 else confidences.item()
+                corr_val = bool(corrects[i].item() if corrects.dim() > 0 else corrects.item())
                 self.sample_states[sample_id].update(
-                    loss=losses[i].item() if losses.dim() > 0 else losses.item(),
-                    confidence=confidences[i].item() if confidences.dim() > 0 else confidences.item(),
-                    correct=corrects[i].item() if corrects.dim() > 0 else bool(corrects),
+                    loss=loss_val,
+                    confidence=conf_val,
+                    correct=corr_val,
                     epoch=self.current_epoch,
+                    lr=lr,
+                    loss_scale=loss_scale,
                 )
 
     def partition_samples(self) -> PartitionStats:
@@ -271,6 +368,25 @@ class GEKOTrainer:
         Returns:
             Dict with training results and efficiency metrics
         """
+        print(
+            f"\n{'='*55}\n"
+            f"  GEKO Training\n"
+            f"{'='*55}\n"
+            f"  Samples      : {len(self.train_dataset)}\n"
+            f"  Epochs       : {self.args.num_epochs}\n"
+            f"  Batch size   : {self.args.batch_size}\n"
+            f"  Device       : {self.device}\n"
+            f"  FP16         : {self.args.fp16}\n"
+            f"  Grad accum   : {self.args.gradient_accumulation_steps}\n"
+            f"  Warmup steps : {self.args.warmup_steps}\n"
+            f"  Curriculum   : {'ON' if self.curriculum else 'OFF'}\n"
+            f"  Config       :\n{self.config}\n"
+            f"{'='*55}\n"
+        )
+
+        # Seed for reproducibility
+        torch.manual_seed(self.args.seed)
+
         self.model.train()
 
         # Setup optimizer
@@ -280,12 +396,24 @@ class GEKOTrainer:
             weight_decay=self.args.weight_decay,
         )
 
-        # Setup mixed precision
-        scaler = torch.cuda.amp.GradScaler() if self.args.fp16 else None
+        # Linear LR warmup: ramps from 0 → base_lr over warmup_steps optimizer steps
+        def _lr_lambda(current_optimizer_step: int) -> float:
+            if current_optimizer_step < self.args.warmup_steps:
+                return float(current_optimizer_step) / float(max(1, self.args.warmup_steps))
+            return 1.0
+
+        scheduler = LambdaLR(optimizer, lr_lambda=_lr_lambda)
+
+        # Setup mixed precision (torch.amp is the non-deprecated API in PyTorch 2.x)
+        device_type = 'cuda' if torch.cuda.is_available() else 'cpu'
+        scaler = torch.amp.GradScaler(device_type) if self.args.fp16 else None
 
         # Training loop
         total_loss = 0
         samples_trained = 0
+        grad_accum = self.args.gradient_accumulation_steps
+
+        optimizer.zero_grad()  # initialise before first accumulation window
 
         for epoch in range(self.args.num_epochs):
             self.current_epoch = epoch
@@ -299,7 +427,16 @@ class GEKOTrainer:
                     print(f"\n[GEKO] Early stopping: {stats.freeze_ratio:.1%} samples mastered!")
                     break
 
-            # Create weighted dataloader
+            # Skip epoch if no trainable samples (all FREEZE or max_times_seen)
+            weights = self._get_sample_weights()
+            if sum(weights) == 0:
+                print(
+                    "\n[GEKO] All samples are mastered or at max_times_seen; "
+                    "skipping this epoch. GEKO will stop after the next partition check."
+                )
+                continue
+
+            # Create weighted dataloader (rebuilt each epoch so weights are fresh)
             dataloader = self._create_dataloader(weighted=True)
 
             # Epoch training
@@ -309,79 +446,172 @@ class GEKOTrainer:
             pbar = tqdm(dataloader, desc=f"Epoch {epoch+1}/{self.args.num_epochs}")
 
             for batch_idx, batch in enumerate(pbar):
-                # Move to device
+                # Move tensors to device
                 batch = {k: v.to(self.device) if isinstance(v, torch.Tensor) else v
                         for k, v in batch.items()}
 
-                # Get sample IDs (if available in batch)
-                sample_ids = batch.pop('sample_id', [str(i) for i in range(len(batch['input_ids']))])
+                # Extract sample IDs (always present due to GEKODataset wrapper).
+                # Fallback uses actual batch size — NOT args.batch_size — so the last
+                # (potentially smaller) batch gets the right number of IDs.
+                sample_ids = batch.pop('sample_id', None)
+                if sample_ids is None:
+                    actual_size = self._get_batch_size(batch)
+                    sample_ids = [str(i) for i in range(actual_size)]
 
                 # Forward pass
-                optimizer.zero_grad()
-
+                batch_size = self._get_batch_size(batch)
                 if self.args.fp16 and scaler:
-                    with torch.cuda.amp.autocast():
+                    with torch.amp.autocast(device_type):
                         outputs = self.model(**batch)
-                        loss = outputs.loss if hasattr(outputs, 'loss') else outputs[0]
+                        loss_raw = outputs.loss if hasattr(outputs, 'loss') else outputs[0]
                 else:
                     outputs = self.model(**batch)
-                    loss = outputs.loss if hasattr(outputs, 'loss') else outputs[0]
+                    loss_raw = outputs.loss if hasattr(outputs, 'loss') else outputs[0]
 
-                # Handle DataParallel
-                if loss.dim() > 0:
-                    loss = loss.mean()
+                # Scalar loss for backward; keep per-sample when model returns 1D loss
+                if loss_raw.dim() == 1 and loss_raw.numel() == batch_size:
+                    loss_for_backward = loss_raw.mean()
+                else:
+                    loss_for_backward = loss_raw.mean() if loss_raw.dim() > 0 else loss_raw
 
-                # Backward pass
+                # Scale loss for gradient accumulation
+                loss = loss_for_backward / grad_accum
+
+                # Backward pass (gradients accumulate across micro-batches)
                 if self.args.fp16 and scaler:
                     scaler.scale(loss).backward()
-                    scaler.unscale_(optimizer)
-                    torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.args.max_grad_norm)
-                    scaler.step(optimizer)
-                    scaler.update()
                 else:
                     loss.backward()
-                    torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.args.max_grad_norm)
-                    optimizer.step()
 
-                # Update tracking
-                batch_size = len(batch['input_ids'])
-                epoch_loss += loss.item() * batch_size
+                # Determine if this batch completes an accumulation window
+                is_last_batch = (batch_idx + 1) == len(dataloader)
+                should_step = ((batch_idx + 1) % grad_accum == 0) or is_last_batch
+
+                if should_step:
+                    if self.args.fp16 and scaler:
+                        scaler.unscale_(optimizer)
+                        torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.args.max_grad_norm)
+                        scaler.step(optimizer)
+                        scaler.update()
+                    else:
+                        torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.args.max_grad_norm)
+                        optimizer.step()
+                    scheduler.step()
+                    optimizer.zero_grad()
+                    # global_step counts optimizer steps (not batches) so that
+                    # logging_steps / save_steps / eval_steps behave consistently
+                    # regardless of gradient_accumulation_steps.
+                    self.global_step += 1
+
+                # Extract confidence and correctness from the training outputs
+                with torch.no_grad():
+                    confidences = self.compute_confidence(outputs, batch)
+                    corrects = self.compute_correctness(outputs, batch)
+                    if loss_raw.dim() == 1 and loss_raw.numel() == batch_size:
+                        batch_losses = loss_raw.detach()
+                    else:
+                        batch_losses = torch.full(
+                            (batch_size,), loss_for_backward.item(), device=self.device
+                        )
+                self._update_sample_states(sample_ids, batch_losses, confidences, corrects)
+
+                # Update tracking (use unscaled loss for metrics)
+                epoch_loss += loss_for_backward.item() * batch_size
                 epoch_samples += batch_size
-                total_loss += loss.item() * batch_size
+                total_loss += loss_for_backward.item() * batch_size
                 samples_trained += batch_size
-                self.global_step += 1
 
-                # Update curriculum
+                # Advance curriculum and adjust LR on phase change
                 if self.curriculum:
                     self.curriculum.step(batch_size)
+                    if self.curriculum.phase_changed:
+                        new_lr = self.curriculum.adjust_learning_rate(self.args.learning_rate)
+                        for param_group in optimizer.param_groups:
+                            param_group['lr'] = new_lr
+                        # Sync scheduler's base LRs so warmup math stays consistent
+                        scheduler.base_lrs = [new_lr] * len(scheduler.base_lrs)
+                        print(
+                            f"\n[GEKO] Phase → {self.curriculum.current_phase.value}, "
+                            f"LR → {new_lr:.2e}"
+                        )
 
                 # Update progress bar
                 pbar.set_postfix({
-                    'loss': f"{loss.item():.4f}",
+                    'loss': f"{loss_for_backward.item():.4f}",
                     'phase': self.curriculum.current_phase.value if self.curriculum else 'N/A',
                 })
 
                 # Logging
-                if self.global_step % self.args.logging_steps == 0:
+                if self.global_step % self.args.logging_steps == 0 and epoch_samples > 0:
                     avg_loss = epoch_loss / epoch_samples
                     print(f"\n[Step {self.global_step}] Loss: {avg_loss:.4f}")
+
+                # Eval
+                if self.eval_dataset is not None and self.global_step % self.args.eval_steps == 0:
+                    self._run_eval()
 
                 # Save checkpoint
                 if self.global_step % self.args.save_steps == 0:
                     self.save_checkpoint()
 
             # End of epoch
-            avg_epoch_loss = epoch_loss / epoch_samples
-            print(f"\n[Epoch {epoch+1}] Average Loss: {avg_epoch_loss:.4f}")
+            if epoch_samples > 0:
+                avg_epoch_loss = epoch_loss / epoch_samples
+                print(f"\n[Epoch {epoch+1}] Average Loss: {avg_epoch_loss:.4f}")
+            else:
+                print(
+                    f"\n[Epoch {epoch+1}] No batches in this epoch "
+                    "(empty dataset or all samples skipped)."
+                )
 
-        # Final save
-        self.save_checkpoint()
+        # Final save (skip if user manages checkpointing themselves)
+        if self.args.save_at_end:
+            self.save_checkpoint()
 
         return {
-            'total_loss': total_loss / samples_trained,
+            'total_loss': total_loss / samples_trained if samples_trained > 0 else 0.0,
             'samples_trained': samples_trained,
             'efficiency': self.get_efficiency_report(),
         }
+
+    def _run_eval(self) -> Optional[float]:
+        """
+        Run evaluation on eval_dataset and return average loss.
+
+        Called automatically every eval_steps batches during training if
+        eval_dataset was provided to GEKOTrainer. Returns None if no eval_dataset.
+        """
+        if self.eval_dataset is None:
+            return None
+
+        self.model.eval()
+        eval_loader = DataLoader(
+            self.eval_dataset,
+            batch_size=self.args.batch_size,
+            shuffle=False,
+            num_workers=self.args.dataloader_num_workers,
+            pin_memory=(self.device.type == 'cuda'),
+        )
+        total_loss = 0.0
+        total_samples = 0
+
+        with torch.no_grad():
+            for batch in eval_loader:
+                batch = {k: v.to(self.device) if isinstance(v, torch.Tensor) else v
+                         for k, v in batch.items()}
+                batch.pop('sample_id', None)  # eval dataset may not have sample_id
+                outputs = self.model(**batch)
+                loss = outputs.loss if hasattr(outputs, 'loss') else outputs[0]
+                if loss.dim() > 0:
+                    loss = loss.mean()
+                bs = self._get_batch_size(batch)
+                total_loss += loss.item() * bs
+                total_samples += bs
+
+        self.model.train()
+        avg_loss = total_loss / total_samples if total_samples > 0 else 0.0
+        print(f"\n[Eval @ step {self.global_step}] Eval Loss: {avg_loss:.4f}")
+        return avg_loss
 
     def save_checkpoint(self, path: Optional[str] = None):
         """Save model and GEKO state."""
@@ -394,17 +624,87 @@ class GEKOTrainer:
         else:
             torch.save(self.model.state_dict(), os.path.join(path, "model.pt"))
 
-        # Save GEKO state
+        # Save GEKO state using to_dict() for clean JSON serialization
         geko_state = {
-            'sample_states': {k: vars(v) for k, v in self.sample_states.items()},
-            'partition_history': [str(p) for p in self.partition_history],
+            'sample_states': {k: v.to_dict() for k, v in self.sample_states.items()},
+            'partition_history': [p.to_dict() for p in self.partition_history],
             'global_step': self.global_step,
             'current_epoch': self.current_epoch,
         }
         with open(os.path.join(path, "geko_state.json"), 'w') as f:
-            json.dump(geko_state, f, indent=2, default=str)
+            json.dump(geko_state, f, indent=2)
 
         print(f"[GEKO] Checkpoint saved to {path}")
+
+    def load_checkpoint(self, path: str):
+        """
+        Load model and GEKO state from a checkpoint directory.
+
+        Restores global_step, current_epoch, and all per-sample states so
+        training can resume exactly where it left off.
+
+        Args:
+            path: Path to the checkpoint directory saved by save_checkpoint()
+
+        Note:
+            For HuggingFace models (save_pretrained / from_pretrained), the model
+            weights must be loaded separately before calling this method:
+                model = AutoModel.from_pretrained(path)
+                trainer = GEKOTrainer(model=model, ...)
+                trainer.load_checkpoint(path)  # restores GEKO state only
+        """
+        # Load plain PyTorch model weights if present
+        model_pt = os.path.join(path, "model.pt")
+        if os.path.exists(model_pt):
+            self.model.load_state_dict(
+                torch.load(model_pt, map_location=self.device, weights_only=True)
+            )
+
+        # Load GEKO state
+        state_path = os.path.join(path, "geko_state.json")
+        if not os.path.exists(state_path):
+            raise FileNotFoundError(
+                f"No geko_state.json found in '{path}'. "
+                f"Make sure '{path}' is a directory created by save_checkpoint()."
+            )
+
+        with open(state_path) as f:
+            geko_state = json.load(f)
+
+        self.global_step = geko_state['global_step']
+        self.current_epoch = geko_state['current_epoch']
+
+        # Restore SampleState objects from serialised dicts
+        for sample_id, d in geko_state['sample_states'].items():
+            if sample_id not in self.sample_states:
+                continue
+            s = self.sample_states[sample_id]
+            s.bucket = Bucket(d['bucket'])
+            s.q_value = d['q_value']
+            s.confidence = d['confidence']
+            s.quality = d['quality']
+            s.loss_history = deque(d['loss_history'], maxlen=5)
+            s.times_seen = d['times_seen']
+            s.last_loss = d['last_loss']
+            s.frozen_at_epoch = d['frozen_at_epoch']
+            s.correct = d['correct']
+
+        # Restore partition history (new format: list of dicts; old format: list of strings)
+        ph = geko_state.get('partition_history', [])
+        if ph and isinstance(ph[0], dict):
+            self.partition_history = [PartitionStats.from_dict(d) for d in ph]
+        else:
+            self.partition_history = []
+            if ph:
+                print(
+                    "[GEKO] Checkpoint was saved with an older format; "
+                    "efficiency history was not restored. New partitions will be recorded from this run."
+                )
+
+        print(
+            f"[GEKO] Resumed from '{path}' "
+            f"(step={self.global_step}, epoch={self.current_epoch})"
+        )
 
     def get_efficiency_report(self) -> Dict:
         """
@@ -415,11 +715,14 @@ class GEKOTrainer:
         if not self.partition_history:
             return {}
 
+        total_samples = len(self.train_dataset)
+        if total_samples == 0:
+            return {}
+
         latest = self.partition_history[-1]
         initial = self.partition_history[0] if len(self.partition_history) > 1 else latest
 
         # Compute savings
-        total_samples = len(self.train_dataset)
         samples_skipped = latest.freeze_count
         compute_saved = samples_skipped / total_samples
 
