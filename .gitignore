@@ -37,7 +37,7 @@ ENV/
 .DS_Store
 Thumbs.db
 
-# Paper (keep private)
+# Paper
 paper/
 
 # Model weights (too large for GitHub)
