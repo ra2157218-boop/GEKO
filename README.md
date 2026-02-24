@@ -22,8 +22,6 @@
 
 > *Like LoRA revolutionized fine-tuning, GEKO revolutionizes training.*
 
-<p align="center"><sub>If GEKO saves you compute, a ⭐ on the repo helps others find it — thank you!</sub></p>
-
 ---
 
 ## Key Insight
