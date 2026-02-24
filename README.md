@@ -11,11 +11,14 @@
   <img src="https://img.shields.io/badge/license-Apache%202.0-green.svg" alt="License">
   <a href="https://github.com/ra2157218-boop/GEKO/actions"><img src="https://github.com/ra2157218-boop/GEKO/actions/workflows/tests.yml/badge.svg" alt="Tests"></a>
   <a href="https://doi.org/10.5281/zenodo.18750303"><img src="https://zenodo.org/badge/DOI/10.5281/zenodo.18750303.svg" alt="DOI"></a>
+  <a href="https://pypi.org/project/gekolib/"><img src="https://img.shields.io/pypi/dm/gekolib.svg" alt="Downloads"></a>
 </p>
 
 <p align="center">
   <b>A plug-and-play training framework that makes LLM training more efficient.</b>
 </p>
+
+<p align="center"><sub>If GEKO saves you compute, a ⭐ on the repo helps others find it — thank you!</sub></p>
 
 > *Like LoRA revolutionized fine-tuning, GEKO revolutionizes training.*
 
