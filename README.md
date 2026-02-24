@@ -11,7 +11,7 @@
   <img src="https://img.shields.io/badge/license-Apache%202.0-green.svg" alt="License">
   <a href="https://github.com/ra2157218-boop/GEKO/actions"><img src="https://github.com/ra2157218-boop/GEKO/actions/workflows/tests.yml/badge.svg" alt="Tests"></a>
   <a href="https://doi.org/10.5281/zenodo.18750303"><img src="https://zenodo.org/badge/DOI/10.5281/zenodo.18750303.svg" alt="DOI"></a>
-  <a href="https://pypi.org/project/gekolib/"><img src="https://img.shields.io/pypi/dt/gekolib?color=39ff14&amp;label=downloads" alt="Downloads"></a>
+  <a href="https://pepy.tech/project/gekolib"><img src="https://static.pepy.tech/personalized-badge/gekolib?period=total&amp;units=international_system&amp;left_color=grey&amp;right_color=39ff14&amp;left_text=downloads" alt="Downloads"></a>
 </p>
 
 <p align="center">
