@@ -18,7 +18,7 @@
   <b>A plug-and-play training framework that makes LLM training more efficient.</b>
 </p>
 
-<p align="center"><sub>If GEKO saves you compute, a ⭐ on the repo helps others find it — thank you!</sub></p>
+<p align="center"><sub>If GEKO saves you compute, a ⭐ on the repo helps others find it, thank you!</sub></p>
 
 > *Like LoRA revolutionized fine-tuning, GEKO revolutionizes training.*
 
