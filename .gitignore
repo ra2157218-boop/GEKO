@@ -40,7 +40,7 @@ Thumbs.db
 # Paper
 paper/
 
-# Model weights (too large for GitHub)
+# Model weights
 *.safetensors
 *.bin
 *.pt
