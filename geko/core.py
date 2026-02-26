@@ -64,6 +64,7 @@ class SampleState:
     last_loss: float = float('inf')
     frozen_at_epoch: Optional[int] = None
     correct: bool = False
+    consecutive_frozen_epochs: int = 0  # How many epochs in a row this sample has been FREEZE
 
     def update(self, loss: float, confidence: float, correct: bool, epoch: int = 0, lr: float = 0.1, loss_scale: float = 10.0):
         """
@@ -169,6 +170,7 @@ class SampleState:
             'last_loss': self.last_loss,
             'frozen_at_epoch': self.frozen_at_epoch,
             'correct': self.correct,
+            'consecutive_frozen_epochs': self.consecutive_frozen_epochs,
         }
 
 
@@ -214,6 +216,9 @@ class GEKOConfig:
 
     # Early stopping for samples
     max_times_seen: int = 50  # Stop training on sample after this
+
+    # Dataset pruning: permanently remove samples frozen for N consecutive epochs (0 = disabled)
+    prune_frozen_after: int = 0
 
     def __post_init__(self):
         """Validate configuration on creation."""

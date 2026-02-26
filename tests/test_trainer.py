@@ -110,9 +110,9 @@ class TestGEKOTrainingArgs:
         args = GEKOTrainingArgs()
         assert args.fp16 == torch.cuda.is_available()
 
-    def test_num_workers_default_zero(self):
+    def test_num_workers_default_auto(self):
         args = GEKOTrainingArgs()
-        assert args.dataloader_num_workers == 0
+        assert args.dataloader_num_workers == -1  # -1 = auto-detect
 
     def test_save_at_end_default_true(self):
         args = GEKOTrainingArgs()

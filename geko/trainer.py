@@ -13,15 +13,16 @@ Key Features:
 - Automatic early stopping when dataset is mastered
 """
 
+import os
+import platform
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader, Dataset, WeightedRandomSampler
 from torch.optim.lr_scheduler import LambdaLR
 from collections import deque
-from typing import Dict, List, Optional, Callable, Any
+from typing import Dict, List, Optional, Callable, Any, Tuple
 from dataclasses import dataclass, field
 import json
-import os
 from tqdm import tqdm
 
 from .core import Bucket, SampleState, GEKOConfig
@@ -83,11 +84,29 @@ class GEKOTrainingArgs:
     save_steps: int = 1000
     eval_steps: int = 500
     max_grad_norm: float = 1.0
-    # Auto-detect GPU: True on CUDA machines, False on CPU-only (e.g. Mac laptops)
+
+    # Precision — fp16 auto-enables on CUDA; bf16 preferred on A100/H100 (no overflow)
     fp16: bool = field(default_factory=lambda: torch.cuda.is_available())
+    bf16: bool = False  # If True and fp16 also True, bf16 wins (no GradScaler needed)
+
     gradient_accumulation_steps: int = 1
-    # Default 0 is safe on all platforms (macOS multiprocessing issues with >0)
-    dataloader_num_workers: int = 0
+
+    # Gradient checkpointing: trade compute for memory (~4x activation memory reduction)
+    gradient_checkpointing: bool = False
+
+    # torch.compile: 20-50% speedup on PyTorch 2.0+ (JIT fusion of model ops)
+    compile_model: bool = False
+
+    # 8-bit Adam: optimizer states int8 instead of fp32 → 2x optimizer memory reduction
+    # Requires: pip install bitsandbytes  (or pip install gekolib[bnb])
+    use_8bit_optimizer: bool = False
+
+    # DataLoader settings
+    # -1 = auto-detect: min(4, cpu_count) on Linux/Windows, 0 on macOS (fork issues)
+    dataloader_num_workers: int = -1
+    dataloader_persistent_workers: bool = True   # Keep workers alive between epochs
+    dataloader_prefetch_factor: int = 2          # Batches to prefetch per worker
+
     seed: int = 42
     # Set False if you want to manage checkpointing yourself
     save_at_end: bool = True
@@ -135,6 +154,7 @@ class GEKOTrainer:
         args: Optional[GEKOTrainingArgs] = None,
         compute_confidence: Optional[Callable] = None,
         compute_correctness: Optional[Callable] = None,
+        lora_config: Optional[Any] = None,
     ):
         """
         Initialize GEKO Trainer.
@@ -151,7 +171,14 @@ class GEKOTrainer:
             compute_correctness: Optional function(outputs, batch) → BoolTensor[batch_size].
                 Default: per-sample when model returns 1D loss, else batch-level (one value per batch).
                 When the model returns a scalar loss, override this for true per-sample bucketing.
+            lora_config: Optional peft.LoraConfig. If provided, wraps model with LoRA adapters
+                before training. Requires: pip install peft
         """
+        # Apply LoRA before anything else (changes model structure)
+        if lora_config is not None:
+            from .peft_utils import apply_lora
+            model = apply_lora(model, lora_config)
+
         self.model = model
         self.tokenizer = tokenizer  # stored for user convenience; not called internally
         # Wrap dataset to inject global sample IDs into each batch
@@ -187,6 +214,9 @@ class GEKOTrainer:
         self.current_epoch = 0
         self.partition_history: List[PartitionStats] = []
         self._warned_batch_level_correctness = False
+        self._last_bucket_distribution: Optional[Tuple[int, int, int, int]] = None
+        self._cached_dataloader: Optional[DataLoader] = None
+        self._pruned_count: int = 0
 
         # Device
         self.device = next(model.parameters()).device
@@ -293,9 +323,22 @@ class GEKOTrainer:
 
         return weights
 
+    def _resolve_num_workers(self) -> int:
+        """Auto-detect optimal DataLoader num_workers."""
+        if self.args.dataloader_num_workers >= 0:
+            return self.args.dataloader_num_workers
+        # macOS has multiprocessing fork issues with DataLoader workers
+        if platform.system() == 'Darwin':
+            return 0
+        return min(4, os.cpu_count() or 1)
+
     def _create_dataloader(self, weighted: bool = True) -> DataLoader:
-        """Create dataloader with GEKO-weighted sampling."""
+        """Create dataloader with GEKO-weighted sampling and fast settings."""
         pin = (self.device.type == 'cuda')
+        num_workers = self._resolve_num_workers()
+        persistent = num_workers > 0 and self.args.dataloader_persistent_workers
+        prefetch = self.args.dataloader_prefetch_factor if num_workers > 0 else None
+
         if weighted:
             weights = self._get_sample_weights()
             # If every sample is FREEZE, all weights are 0 — WeightedRandomSampler would
@@ -311,16 +354,20 @@ class GEKOTrainer:
                 self.train_dataset,
                 batch_size=self.args.batch_size,
                 sampler=sampler,
-                num_workers=self.args.dataloader_num_workers,
+                num_workers=num_workers,
                 pin_memory=pin,
+                persistent_workers=persistent,
+                prefetch_factor=prefetch,
             )
         else:
             return DataLoader(
                 self.train_dataset,
                 batch_size=self.args.batch_size,
                 shuffle=True,
-                num_workers=self.args.dataloader_num_workers,
+                num_workers=num_workers,
                 pin_memory=pin,
+                persistent_workers=persistent,
+                prefetch_factor=prefetch,
             )
 
     def _update_sample_states(
@@ -352,6 +399,7 @@ class GEKOTrainer:
         Re-partition all samples based on current model performance.
 
         Call this at the start of each epoch to update bucket assignments.
+        Also handles consecutive_frozen_epochs tracking and dataset pruning.
         """
         stats = self.partitioner.partition(self.sample_states, self.current_epoch)
         self.partition_history.append(stats)
@@ -359,7 +407,33 @@ class GEKOTrainer:
         if self.config.log_bucket_stats:
             print(f"\n[GEKO] Epoch {self.current_epoch} Partition: {stats}")
 
+        # Update consecutive_frozen_epochs and prune if configured
+        to_prune = []
+        for sample_id, state in self.sample_states.items():
+            if state.bucket == Bucket.FREEZE:
+                state.consecutive_frozen_epochs += 1
+            else:
+                state.consecutive_frozen_epochs = 0
+
+            if (self.config.prune_frozen_after > 0 and
+                    state.consecutive_frozen_epochs >= self.config.prune_frozen_after):
+                to_prune.append(sample_id)
+
+        if to_prune:
+            for sample_id in to_prune:
+                del self.sample_states[sample_id]
+            self._pruned_count += len(to_prune)
+            print(
+                f"[GEKO] Pruned {len(to_prune)} samples "
+                f"(frozen for {self.config.prune_frozen_after}+ epochs). "
+                f"Active dataset: {len(self.sample_states)} samples."
+            )
+
         return stats
+
+    def get_pruned_count(self) -> int:
+        """Return the total number of samples permanently pruned so far."""
+        return self._pruned_count
 
     def train(self):
         """
@@ -368,33 +442,77 @@ class GEKOTrainer:
         Returns:
             Dict with training results and efficiency metrics
         """
+        # Resolve precision mode
+        use_bf16 = self.args.bf16
+        use_fp16 = self.args.fp16 and not use_bf16
+        if self.args.bf16 and self.args.fp16:
+            print("[GEKO] Both bf16 and fp16 set — bf16 takes priority.")
+        precision_str = "BF16" if use_bf16 else ("FP16" if use_fp16 else "FP32")
+
         print(
             f"\n{'='*55}\n"
             f"  GEKO Training\n"
             f"{'='*55}\n"
-            f"  Samples      : {len(self.train_dataset)}\n"
-            f"  Epochs       : {self.args.num_epochs}\n"
-            f"  Batch size   : {self.args.batch_size}\n"
-            f"  Device       : {self.device}\n"
-            f"  FP16         : {self.args.fp16}\n"
-            f"  Grad accum   : {self.args.gradient_accumulation_steps}\n"
-            f"  Warmup steps : {self.args.warmup_steps}\n"
-            f"  Curriculum   : {'ON' if self.curriculum else 'OFF'}\n"
-            f"  Config       :\n{self.config}\n"
+            f"  Samples           : {len(self.train_dataset)}\n"
+            f"  Epochs            : {self.args.num_epochs}\n"
+            f"  Batch size        : {self.args.batch_size}\n"
+            f"  Device            : {self.device}\n"
+            f"  Precision         : {precision_str}\n"
+            f"  Grad accum        : {self.args.gradient_accumulation_steps}\n"
+            f"  Grad checkpointing: {'ON' if self.args.gradient_checkpointing else 'OFF'}\n"
+            f"  torch.compile     : {'ON' if self.args.compile_model else 'OFF'}\n"
+            f"  8-bit optimizer   : {'ON' if self.args.use_8bit_optimizer else 'OFF'}\n"
+            f"  DataLoader workers: {self._resolve_num_workers()}\n"
+            f"  Warmup steps      : {self.args.warmup_steps}\n"
+            f"  Curriculum        : {'ON' if self.curriculum else 'OFF'}\n"
+            f"  Config            :\n{self.config}\n"
             f"{'='*55}\n"
         )
 
         # Seed for reproducibility
         torch.manual_seed(self.args.seed)
 
+        # Gradient checkpointing (trade activation memory for recompute)
+        if self.args.gradient_checkpointing:
+            if hasattr(self.model, 'gradient_checkpointing_enable'):
+                self.model.gradient_checkpointing_enable()
+                print("[GEKO] Gradient checkpointing enabled")
+            else:
+                print("[GEKO] Warning: model does not support gradient_checkpointing_enable(), skipping")
+
+        # torch.compile (PyTorch 2.0+ JIT fusion — 20-50% speedup)
+        if self.args.compile_model:
+            if hasattr(torch, 'compile'):
+                print("[GEKO] Compiling model with torch.compile (first batch will be slow)...")
+                self.model = torch.compile(self.model)
+            else:
+                print("[GEKO] Warning: torch.compile not available (requires PyTorch 2.0+), skipping")
+
         self.model.train()
 
-        # Setup optimizer
-        optimizer = torch.optim.AdamW(
-            self.model.parameters(),
-            lr=self.args.learning_rate,
-            weight_decay=self.args.weight_decay,
-        )
+        # Setup optimizer (standard or 8-bit)
+        if self.args.use_8bit_optimizer:
+            try:
+                import bitsandbytes as bnb
+                optimizer = bnb.optim.AdamW8bit(
+                    self.model.parameters(),
+                    lr=self.args.learning_rate,
+                    weight_decay=self.args.weight_decay,
+                )
+                print("[GEKO] Using 8-bit AdamW optimizer")
+            except ImportError:
+                raise ImportError(
+                    "bitsandbytes is required for use_8bit_optimizer=True. Install it with:\n"
+                    "    pip install bitsandbytes\n"
+                    "or:\n"
+                    "    pip install gekolib[bnb]"
+                )
+        else:
+            optimizer = torch.optim.AdamW(
+                self.model.parameters(),
+                lr=self.args.learning_rate,
+                weight_decay=self.args.weight_decay,
+            )
 
         # Linear LR warmup: ramps from 0 → base_lr over warmup_steps optimizer steps
         def _lr_lambda(current_optimizer_step: int) -> float:
@@ -404,9 +522,20 @@ class GEKOTrainer:
 
         scheduler = LambdaLR(optimizer, lr_lambda=_lr_lambda)
 
-        # Setup mixed precision (torch.amp is the non-deprecated API in PyTorch 2.x)
+        # Setup mixed precision
         device_type = 'cuda' if torch.cuda.is_available() else 'cpu'
-        scaler = torch.amp.GradScaler(device_type) if self.args.fp16 else None
+        # bf16 doesn't need GradScaler (no overflow risk); fp16 does
+        if use_bf16:
+            scaler = None
+            autocast_dtype = torch.bfloat16
+        elif use_fp16:
+            scaler = torch.amp.GradScaler(device_type)
+            autocast_dtype = torch.float16
+        else:
+            scaler = None
+            autocast_dtype = None
+
+        use_amp = use_bf16 or use_fp16
 
         # Training loop
         total_loss = 0
@@ -436,8 +565,21 @@ class GEKOTrainer:
                 )
                 continue
 
-            # Create weighted dataloader (rebuilt each epoch so weights are fresh)
-            dataloader = self._create_dataloader(weighted=True)
+            # Create weighted dataloader — only rebuild if bucket distribution changed >5%
+            total = len(self.sample_states) or 1
+            current_dist = (stats.freeze_count, stats.light_count, stats.focus_count, stats.hard_count)
+            dist_changed = True
+            if self._last_bucket_distribution is not None and self._cached_dataloader is not None:
+                dist_changed = any(
+                    abs(current_dist[i] - self._last_bucket_distribution[i]) / total > 0.05
+                    for i in range(4)
+                )
+                if not dist_changed:
+                    print("[GEKO] Bucket distribution stable — reusing dataloader")
+            if dist_changed:
+                self._cached_dataloader = self._create_dataloader(weighted=True)
+                self._last_bucket_distribution = current_dist
+            dataloader = self._cached_dataloader
 
             # Epoch training
             epoch_loss = 0
@@ -446,8 +588,8 @@ class GEKOTrainer:
             pbar = tqdm(dataloader, desc=f"Epoch {epoch+1}/{self.args.num_epochs}")
 
             for batch_idx, batch in enumerate(pbar):
-                # Move tensors to device
-                batch = {k: v.to(self.device) if isinstance(v, torch.Tensor) else v
+                # Move tensors to device (non_blocking overlaps transfer with compute)
+                batch = {k: v.to(self.device, non_blocking=True) if isinstance(v, torch.Tensor) else v
                         for k, v in batch.items()}
 
                 # Extract sample IDs (always present due to GEKODataset wrapper).
@@ -460,8 +602,8 @@ class GEKOTrainer:
 
                 # Forward pass
                 batch_size = self._get_batch_size(batch)
-                if self.args.fp16 and scaler:
-                    with torch.amp.autocast(device_type):
+                if use_amp:
+                    with torch.amp.autocast(device_type, dtype=autocast_dtype):
                         outputs = self.model(**batch)
                         loss_raw = outputs.loss if hasattr(outputs, 'loss') else outputs[0]
                 else:
@@ -478,7 +620,7 @@ class GEKOTrainer:
                 loss = loss_for_backward / grad_accum
 
                 # Backward pass (gradients accumulate across micro-batches)
-                if self.args.fp16 and scaler:
+                if scaler:
                     scaler.scale(loss).backward()
                 else:
                     loss.backward()
@@ -488,7 +630,7 @@ class GEKOTrainer:
                 should_step = ((batch_idx + 1) % grad_accum == 0) or is_last_batch
 
                 if should_step:
-                    if self.args.fp16 and scaler:
+                    if scaler:
                         scaler.unscale_(optimizer)
                         torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.args.max_grad_norm)
                         scaler.step(optimizer)
@@ -688,6 +830,7 @@ class GEKOTrainer:
             s.last_loss = d['last_loss']
             s.frozen_at_epoch = d['frozen_at_epoch']
             s.correct = d['correct']
+            s.consecutive_frozen_epochs = d.get('consecutive_frozen_epochs', 0)
 
         # Restore partition history (new format: list of dicts; old format: list of strings)
         ph = geko_state.get('partition_history', [])

@@ -11,7 +11,7 @@ with open("README.md", "r", encoding="utf-8") as f:
 
 setup(
     name="gekolib",
-    version="0.2.0",
+    version="0.3.0",
     author="Syed Abdur Rehman",
     author_email="ra2157218@gmail.com",
     description="Gradient-Efficient Knowledge Optimization - Smart training for any LLM",
@@ -45,6 +45,17 @@ setup(
         ],
         "transformers": [
             "transformers>=4.20.0",
+        ],
+        "peft": [
+            "peft>=0.6.0",
+        ],
+        "bnb": [
+            "bitsandbytes>=0.41.0",
+        ],
+        "all": [
+            "transformers>=4.20.0",
+            "peft>=0.6.0",
+            "bitsandbytes>=0.41.0",
         ],
     },
     keywords=[
