@@ -49,3 +49,12 @@ paper/
 # Misc
 *.log
 *.tmp
+
+# Training outputs & checkpoints
+geko_r1_output/
+
+# Papers / PDFs
+*.pdf
+
+# Plan files
+sharded-percolating-scone.md

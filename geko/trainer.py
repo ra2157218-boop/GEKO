@@ -483,8 +483,11 @@ class GEKOTrainer:
         # torch.compile (PyTorch 2.0+ JIT fusion — 20-50% speedup)
         if self.args.compile_model:
             if hasattr(torch, 'compile'):
-                print("[GEKO] Compiling model with torch.compile (first batch will be slow)...")
-                self.model = torch.compile(self.model)
+                try:
+                    print("[GEKO] Compiling model with torch.compile (first batch will be slow)...")
+                    self.model = torch.compile(self.model)
+                except RuntimeError as e:
+                    print(f"[GEKO] Warning: torch.compile failed ({e}), skipping")
             else:
                 print("[GEKO] Warning: torch.compile not available (requires PyTorch 2.0+), skipping")
 
@@ -731,7 +734,7 @@ class GEKOTrainer:
             self.eval_dataset,
             batch_size=self.args.batch_size,
             shuffle=False,
-            num_workers=self.args.dataloader_num_workers,
+            num_workers=self._resolve_num_workers(),
             pin_memory=(self.device.type == 'cuda'),
         )
         total_loss = 0.0
