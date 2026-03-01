@@ -16,7 +16,7 @@
 </p>
 
 <p align="center">
-  <b>Fine-tune LLMs smarter and cheaper — GEKO skips samples the model already knows.</b>
+  <b>Stop paying to train what your model already knows.</b>
 </p>
 
 <p align="center"><sub>If GEKO saves you compute, a ⭐ helps others find it — thank you!</sub></p>
