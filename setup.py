@@ -11,14 +11,19 @@ with open("README.md", "r", encoding="utf-8") as f:
 
 setup(
     name="gekolib",
-    version="0.3.0",
+    version="0.3.1",
     author="Syed Abdur Rehman",
     author_email="ra2157218@gmail.com",
     description="Gradient-Efficient Knowledge Optimization - Smart training for any LLM",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/ra2157218-boop/GEKO",
+    url="https://github.com/Abd0r/GEKO",
     packages=find_packages(),
+    entry_points={
+        "console_scripts": [
+            "geko-app = geko.app:main",
+        ],
+    },
     classifiers=[
         "Development Status :: 3 - Alpha",
         "Intended Audience :: Developers",
@@ -52,10 +57,23 @@ setup(
         "bnb": [
             "bitsandbytes>=0.41.0",
         ],
+        "rich": [
+            "rich>=10.0.0",
+        ],
+        "app": [
+            "gradio>=4.0.0",
+            "plotly>=5.0.0",
+            "transformers>=4.20.0",
+            "datasets>=2.0.0",
+        ],
         "all": [
             "transformers>=4.20.0",
             "peft>=0.6.0",
             "bitsandbytes>=0.41.0",
+            "rich>=10.0.0",
+            "gradio>=4.0.0",
+            "plotly>=5.0.0",
+            "datasets>=2.0.0",
         ],
     },
     keywords=[

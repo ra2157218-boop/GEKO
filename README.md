@@ -9,9 +9,10 @@
   <img src="https://img.shields.io/badge/python-3.8+-blue.svg" alt="Python">
   <img src="https://img.shields.io/badge/pytorch-1.9+-red.svg" alt="PyTorch">
   <img src="https://img.shields.io/badge/license-Apache%202.0-green.svg" alt="License">
-  <a href="https://github.com/ra2157218-boop/GEKO/actions"><img src="https://github.com/ra2157218-boop/GEKO/actions/workflows/tests.yml/badge.svg" alt="Tests"></a>
+  <a href="https://github.com/Abd0r/GEKO/actions"><img src="https://github.com/Abd0r/GEKO/actions/workflows/tests.yml/badge.svg" alt="Tests"></a>
   <a href="https://doi.org/10.5281/zenodo.18750303"><img src="https://zenodo.org/badge/DOI/10.5281/zenodo.18750303.svg" alt="DOI"></a>
   <a href="https://pepy.tech/projects/gekolib"><img src="https://static.pepy.tech/personalized-badge/gekolib?period=total&amp;units=INTERNATIONAL_SYSTEM&amp;left_color=grey&amp;right_color=brightgreen&amp;left_text=downloads" alt="Downloads"></a>
+  <a href="https://paypal.me/n4z1m"><img src="https://img.shields.io/badge/Support-PayPal-00457C.svg?logo=paypal" alt="Support via PayPal"></a>
 </p>
 
 <p align="center">
@@ -25,9 +26,11 @@
 ## Table of Contents
 
 - [What is GEKO?](#what-is-geko)
+- [v0.3.1 — No-Code Web App](#v031--no-code-web-app)
 - [v0.3.0 — 8 Efficiency Features](#v030--8-efficiency-features)
 - [Installation](#installation)
 - [Quick Start](#quick-start)
+- [GEKO Web App](#geko-web-app)
 - [What GEKO Looks Like](#what-geko-looks-like)
 - [LoRA Integration](#lora-integration)
 - [Model Compatibility](#model-compatibility)
@@ -55,6 +58,37 @@ Most training loops treat every sample equally every epoch. That's wasteful — 
 
 ---
 
+## v0.3.1 — No-Code Web App
+
+v0.3.1 adds a full **Gradio web interface** — fine-tune any HuggingFace model with GEKO without writing a single line of code.
+
+```bash
+pip install gekolib[app]
+geko-app
+# opens http://localhost:7860
+```
+
+| What you get | Detail |
+|:------------|:-------|
+| **Model & dataset picker** | Any HuggingFace model or dataset ID |
+| **Eval dataset support** | Optional HF eval set + split picker |
+| **GEKO config presets** | Aggressive / Balanced / Conservative — one click |
+| **All sliders exposed** | freeze/focus/quality thresholds, curriculum, pruning, warmup, weight decay |
+| **LoRA panel** | Enable, set rank/alpha/target modules/dropout from the UI |
+| **Efficiency toggles** | torch.compile, gradient checkpointing, 8-bit optimizer |
+| **Live loss curve** | Plotly chart, updates every batch |
+| **Live bucket chart** | FREEZE / LIGHT / FOCUS / HARD distribution in real time |
+| **Steps/sec + ETA** | Computed from a rolling 20-step window |
+| **Eval loss stat box** | Populated automatically when eval dataset is set |
+| **Training summary card** | Final loss, compute saved, steps, output path |
+| **Resume from checkpoint** | Point to any checkpoint directory and continue |
+| **Custom output directory** | Set where checkpoints are saved |
+| **Stop button** | Safely halts training mid-epoch |
+| **Clear / Reset button** | Wipes all outputs and charts |
+| **Hardware info strip** | Shows PyTorch version + GPU/CPU at page load |
+
+---
+
 ## v0.3.0 — 8 Efficiency Features
 
 v0.3.0 makes GEKO production-ready for cheap LLM fine-tuning:
@@ -78,14 +112,28 @@ v0.3.0 makes GEKO production-ready for cheap LLM fine-tuning:
 # Core
 pip install gekolib
 
+# With Gradio web app (v0.3.1)
+pip install gekolib[app]
+
 # With LoRA support
 pip install gekolib[peft]
 
 # With 8-bit optimizer
 pip install gekolib[bnb]
 
+# With rich terminal UI
+pip install gekolib[rich]
+
 # Everything
 pip install gekolib[all]
+```
+
+**Launch the web app:**
+
+```bash
+geko-app
+# or: python -m geko.app
+# Opens http://localhost:7860
 ```
 
 ---
@@ -125,6 +173,43 @@ print(trainer.get_efficiency_report())
 ```
 
 > **Dataset requirement:** `__getitem__` must return a dict with at least an `'input_ids'` key.
+
+---
+
+## GEKO Web App
+
+The GEKO web app gives you a full no-code training UI powered by Gradio.
+
+```bash
+pip install gekolib[app]
+geko-app
+```
+
+![GEKO Web App](https://raw.githubusercontent.com/Abd0r/GEKO/main/assets/GekoUIpreview.png)
+
+**Left panel — Configuration:**
+- Model name (any HuggingFace model ID, e.g. `gpt2`, `meta-llama/Llama-2-7b-hf`)
+- Dataset name + train split + sample count
+- Eval dataset + eval split (optional — enables live eval loss)
+- Training hyperparameters: epochs, learning rate, batch size, gradient accumulation
+- Precision: BF16 / FP16 / FP32
+- Efficiency: torch.compile, gradient checkpointing, 8-bit optimizer
+- **GEKO Config:** preset selector (Aggressive / Balanced / Conservative), freeze confidence, focus confidence, freeze quality, curriculum on/off, pruning threshold
+- **LoRA:** enable toggle, rank, alpha, target modules, dropout
+- Advanced: warmup steps, weight decay, max grad norm, seed
+- Output directory + resume-from-checkpoint path
+
+**Right panel — Live training dashboard:**
+- Status bar (color-coded: ready → training → complete / error)
+- Live loss curve (Plotly, updates each optimizer step)
+- Live bucket distribution chart (FREEZE / LIGHT / FOCUS / HARD percentages)
+- Stat boxes: Epoch · Step · Compute Saved · Avg Loss · Steps/sec · ETA · Eval Loss
+- Training summary card (appears on completion: final loss, compute saved, steps, save path)
+
+**Buttons:**
+- `Start Training` — launches training in a background thread
+- `Stop` — safely interrupts training between batches (no corrupt checkpoints)
+- `Clear` — resets all outputs and charts
 
 ---
 
@@ -452,6 +537,22 @@ Minimal. Per-epoch overhead is one O(N) pass over sample states to reclassify bu
 
 ## Changelog
 
+### v0.3.1 — No-Code Web App
+- **Gradio web interface** — full training UI, no code required (`geko-app` CLI entry point)
+- **GEKO config presets** — Aggressive / Balanced / Conservative, one click to apply
+- **`freeze_quality` slider** — exposes the Q-value gate for FREEZE in the UI
+- **Eval dataset support** — enter any HuggingFace eval dataset + split; live eval loss stat box
+- **Steps/sec + ETA stat boxes** — computed from a rolling 20-step window
+- **Eval Loss stat box** — populated by dedicated `eval_loss` events from the trainer
+- **Training summary card** — rendered on completion with final loss, compute saved, steps, output path
+- **Resume from checkpoint** — textbox input wired to `trainer.load_checkpoint()`
+- **Custom output directory** — user-controlled, defaults to `./geko_output`
+- **Clear / Reset button** — wipes all live outputs and charts
+- **Hardware info strip** — PyTorch version + GPU name/VRAM or "CPU only" at page load
+- **Stop button** — safely halts training between batches
+- Added `pip install gekolib[app]` extra (gradio, plotly, transformers, datasets)
+- Added `geko-app` console script entry point
+
 ### v0.3.0 — Efficiency Update
 - **LoRA / PEFT integration** — pass `lora_config` to `GEKOTrainer`; prints trainable/frozen param counts
 - **BF16 mixed precision** — `bf16=True` in `GEKOTrainingArgs`; unified autocast with FP16
@@ -495,7 +596,7 @@ Minimal. Per-epoch overhead is one O(N) pass over sample states to reclassify bu
   author = {Syed Abdur Rehman},
   title  = {GEKO: Gradient-Efficient Knowledge Optimization},
   year   = {2026},
-  url    = {https://github.com/ra2157218-boop/GEKO},
+  url    = {https://github.com/Abd0r/GEKO},
   doi    = {10.5281/zenodo.18750303}
 }
 ```
@@ -505,6 +606,14 @@ Minimal. Per-epoch overhead is one O(N) pass over sample states to reclassify bu
 ## License
 
 Apache 2.0
+
+---
+
+## Support
+
+GEKO is a solo open-source project. If it's useful to you, any support goes directly toward keeping it maintained and growing.
+
+<a href="https://paypal.me/n4z1m"><img src="https://img.shields.io/badge/Support-PayPal-00457C.svg?logo=paypal" alt="Support via PayPal"></a>
 
 ---
 

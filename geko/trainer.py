@@ -111,6 +111,10 @@ class GEKOTrainingArgs:
     # Set False if you want to manage checkpointing yourself
     save_at_end: bool = True
 
+    # Rich terminal UI: colored panels, progress bars, bucket charts
+    # Set False to use plain text output (or if rich is not installed)
+    use_rich_ui: bool = True
+
 
 class GEKOTrainer:
     """
@@ -221,6 +225,10 @@ class GEKOTrainer:
         # Device
         self.device = next(model.parameters()).device
 
+        # Rich UI (optional dep — falls back to plain print if not installed)
+        from .ui import GEKORichUI
+        self.ui = GEKORichUI(use_rich=self.args.use_rich_ui)
+
     @staticmethod
     def _get_batch_size(batch: dict) -> int:
         """Infer batch size from the first tensor in the batch."""
@@ -285,10 +293,7 @@ class GEKOTrainer:
             return (loss < threshold).to(dtype=torch.bool, device=self.device)
         # Batch-level fallback: one value for whole batch
         if not self._warned_batch_level_correctness:
-            print(
-                "[GEKO] Using batch-level correctness (model returns scalar loss). "
-                "For per-sample bucketing, override compute_correctness; see API Reference."
-            )
+            self.ui.log_batch_mode_warning()
             self._warned_batch_level_correctness = True
         loss_val = loss.mean().item() if loss.dim() > 0 else loss.item()
         return torch.tensor(
@@ -405,7 +410,7 @@ class GEKOTrainer:
         self.partition_history.append(stats)
 
         if self.config.log_bucket_stats:
-            print(f"\n[GEKO] Epoch {self.current_epoch} Partition: {stats}")
+            self.ui.print_partition(self.current_epoch, stats)
 
         # Update consecutive_frozen_epochs and prune if configured
         to_prune = []
@@ -423,11 +428,7 @@ class GEKOTrainer:
             for sample_id in to_prune:
                 del self.sample_states[sample_id]
             self._pruned_count += len(to_prune)
-            print(
-                f"[GEKO] Pruned {len(to_prune)} samples "
-                f"(frozen for {self.config.prune_frozen_after}+ epochs). "
-                f"Active dataset: {len(self.sample_states)} samples."
-            )
+            self.ui.log_pruned(len(to_prune), self.config.prune_frozen_after, len(self.sample_states))
 
         return stats
 
@@ -446,27 +447,16 @@ class GEKOTrainer:
         use_bf16 = self.args.bf16
         use_fp16 = self.args.fp16 and not use_bf16
         if self.args.bf16 and self.args.fp16:
-            print("[GEKO] Both bf16 and fp16 set — bf16 takes priority.")
+            self.ui.log_warning("Both bf16 and fp16 set — bf16 takes priority.")
         precision_str = "BF16" if use_bf16 else ("FP16" if use_fp16 else "FP32")
 
-        print(
-            f"\n{'='*55}\n"
-            f"  GEKO Training\n"
-            f"{'='*55}\n"
-            f"  Samples           : {len(self.train_dataset)}\n"
-            f"  Epochs            : {self.args.num_epochs}\n"
-            f"  Batch size        : {self.args.batch_size}\n"
-            f"  Device            : {self.device}\n"
-            f"  Precision         : {precision_str}\n"
-            f"  Grad accum        : {self.args.gradient_accumulation_steps}\n"
-            f"  Grad checkpointing: {'ON' if self.args.gradient_checkpointing else 'OFF'}\n"
-            f"  torch.compile     : {'ON' if self.args.compile_model else 'OFF'}\n"
-            f"  8-bit optimizer   : {'ON' if self.args.use_8bit_optimizer else 'OFF'}\n"
-            f"  DataLoader workers: {self._resolve_num_workers()}\n"
-            f"  Warmup steps      : {self.args.warmup_steps}\n"
-            f"  Curriculum        : {'ON' if self.curriculum else 'OFF'}\n"
-            f"  Config            :\n{self.config}\n"
-            f"{'='*55}\n"
+        self.ui.print_training_header(
+            self.args,
+            self.config,
+            n_train=len(self.train_dataset),
+            n_eval=len(self.eval_dataset) if self.eval_dataset else None,
+            device=str(self.device),
+            n_workers=self._resolve_num_workers(),
         )
 
         # Seed for reproducibility
@@ -476,20 +466,22 @@ class GEKOTrainer:
         if self.args.gradient_checkpointing:
             if hasattr(self.model, 'gradient_checkpointing_enable'):
                 self.model.gradient_checkpointing_enable()
-                print("[GEKO] Gradient checkpointing enabled")
+                self.ui.log_message("[GEKO] Gradient checkpointing enabled")
             else:
-                print("[GEKO] Warning: model does not support gradient_checkpointing_enable(), skipping")
+                self.ui.log_warning("model does not support gradient_checkpointing_enable(), skipping")
 
         # torch.compile (PyTorch 2.0+ JIT fusion — 20-50% speedup)
         if self.args.compile_model:
             if hasattr(torch, 'compile'):
                 try:
-                    print("[GEKO] Compiling model with torch.compile (first batch will be slow)...")
+                    self.ui.log_message(
+                        "[GEKO] Compiling model with torch.compile (first batch will be slow)..."
+                    )
                     self.model = torch.compile(self.model)
                 except RuntimeError as e:
-                    print(f"[GEKO] Warning: torch.compile failed ({e}), skipping")
+                    self.ui.log_warning(f"torch.compile failed ({e}), skipping")
             else:
-                print("[GEKO] Warning: torch.compile not available (requires PyTorch 2.0+), skipping")
+                self.ui.log_warning("torch.compile not available (requires PyTorch 2.0+), skipping")
 
         self.model.train()
 
@@ -502,7 +494,7 @@ class GEKOTrainer:
                     lr=self.args.learning_rate,
                     weight_decay=self.args.weight_decay,
                 )
-                print("[GEKO] Using 8-bit AdamW optimizer")
+                self.ui.log_message("[GEKO] Using 8-bit AdamW optimizer")
             except ImportError:
                 raise ImportError(
                     "bitsandbytes is required for use_8bit_optimizer=True. Install it with:\n"
@@ -556,16 +548,13 @@ class GEKOTrainer:
 
                 # Check for early stopping
                 if self.partitioner.should_stop_early(stats):
-                    print(f"\n[GEKO] Early stopping: {stats.freeze_ratio:.1%} samples mastered!")
+                    self.ui.log_early_stop(stats.freeze_ratio)
                     break
 
             # Skip epoch if no trainable samples (all FREEZE or max_times_seen)
             weights = self._get_sample_weights()
             if sum(weights) == 0:
-                print(
-                    "\n[GEKO] All samples are mastered or at max_times_seen; "
-                    "skipping this epoch. GEKO will stop after the next partition check."
-                )
+                self.ui.log_all_mastered()
                 continue
 
             # Create weighted dataloader — only rebuild if bucket distribution changed >5%
@@ -578,7 +567,7 @@ class GEKOTrainer:
                     for i in range(4)
                 )
                 if not dist_changed:
-                    print("[GEKO] Bucket distribution stable — reusing dataloader")
+                    self.ui.log_dataloader_reuse()
             if dist_changed:
                 self._cached_dataloader = self._create_dataloader(weighted=True)
                 self._last_bucket_distribution = current_dist
@@ -588,9 +577,9 @@ class GEKOTrainer:
             epoch_loss = 0
             epoch_samples = 0
 
-            pbar = tqdm(dataloader, desc=f"Epoch {epoch+1}/{self.args.num_epochs}")
+            pbar = self.ui.start_epoch_progress(epoch + 1, self.args.num_epochs, len(dataloader))
 
-            for batch_idx, batch in enumerate(pbar):
+            for batch_idx, batch in enumerate(dataloader):
                 # Move tensors to device (non_blocking overlaps transfer with compute)
                 batch = {k: v.to(self.device, non_blocking=True) if isinstance(v, torch.Tensor) else v
                         for k, v in batch.items()}
@@ -675,21 +664,17 @@ class GEKOTrainer:
                             param_group['lr'] = new_lr
                         # Sync scheduler's base LRs so warmup math stays consistent
                         scheduler.base_lrs = [new_lr] * len(scheduler.base_lrs)
-                        print(
-                            f"\n[GEKO] Phase → {self.curriculum.current_phase.value}, "
-                            f"LR → {new_lr:.2e}"
+                        self.ui.log_phase_change(
+                            self.curriculum.current_phase.value, new_lr
                         )
 
                 # Update progress bar
-                pbar.set_postfix({
-                    'loss': f"{loss_for_backward.item():.4f}",
-                    'phase': self.curriculum.current_phase.value if self.curriculum else 'N/A',
-                })
+                self.ui.update_progress(pbar, loss_for_backward.item())
 
                 # Logging
                 if self.global_step % self.args.logging_steps == 0 and epoch_samples > 0:
                     avg_loss = epoch_loss / epoch_samples
-                    print(f"\n[Step {self.global_step}] Loss: {avg_loss:.4f}")
+                    self.ui.log_step_loss(self.global_step, avg_loss)
 
                 # Eval
                 if self.eval_dataset is not None and self.global_step % self.args.eval_steps == 0:
@@ -700,24 +685,24 @@ class GEKOTrainer:
                     self.save_checkpoint()
 
             # End of epoch
+            self.ui.finish_epoch_progress(pbar)
             if epoch_samples > 0:
                 avg_epoch_loss = epoch_loss / epoch_samples
-                print(f"\n[Epoch {epoch+1}] Average Loss: {avg_epoch_loss:.4f}")
+                self.ui.log_epoch_loss(epoch + 1, avg_epoch_loss)
             else:
-                print(
-                    f"\n[Epoch {epoch+1}] No batches in this epoch "
-                    "(empty dataset or all samples skipped)."
-                )
+                self.ui.log_no_batches(epoch + 1)
 
         # Final save (skip if user manages checkpointing themselves)
         if self.args.save_at_end:
             self.save_checkpoint()
 
-        return {
+        result = {
             'total_loss': total_loss / samples_trained if samples_trained > 0 else 0.0,
             'samples_trained': samples_trained,
             'efficiency': self.get_efficiency_report(),
         }
+        self.ui.print_summary(result, self.get_efficiency_report(), self.get_pruned_count())
+        return result
 
     def _run_eval(self) -> Optional[float]:
         """
@@ -755,7 +740,7 @@ class GEKOTrainer:
 
         self.model.train()
         avg_loss = total_loss / total_samples if total_samples > 0 else 0.0
-        print(f"\n[Eval @ step {self.global_step}] Eval Loss: {avg_loss:.4f}")
+        self.ui.log_eval_loss(self.global_step, avg_loss)
         return avg_loss
 
     def save_checkpoint(self, path: Optional[str] = None):
@@ -779,7 +764,7 @@ class GEKOTrainer:
         with open(os.path.join(path, "geko_state.json"), 'w') as f:
             json.dump(geko_state, f, indent=2)
 
-        print(f"[GEKO] Checkpoint saved to {path}")
+        self.ui.log_checkpoint(path)
 
     def load_checkpoint(self, path: str):
         """
@@ -842,15 +827,9 @@ class GEKOTrainer:
         else:
             self.partition_history = []
             if ph:
-                print(
-                    "[GEKO] Checkpoint was saved with an older format; "
-                    "efficiency history was not restored. New partitions will be recorded from this run."
-                )
+                self.ui.log_old_checkpoint()
 
-        print(
-            f"[GEKO] Resumed from '{path}' "
-            f"(step={self.global_step}, epoch={self.current_epoch})"
-        )
+        self.ui.log_resumed(path, self.global_step, self.current_epoch)
 
     def get_efficiency_report(self) -> Dict:
         """

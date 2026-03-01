@@ -18,7 +18,7 @@ Paper: "GEKO: Gradient-Efficient Knowledge Optimization via
 Author: Syed Abdur Rehman
 """
 
-__version__ = "0.3.0"
+__version__ = "0.3.1"
 __author__ = "Syed Abdur Rehman"
 
 from .core import (
@@ -30,6 +30,7 @@ from .trainer import GEKOTrainer, GEKOTrainingArgs, GEKODataset
 from .curriculum import MountainCurriculum
 from .partitioner import SamplePartitioner
 from .peft_utils import apply_lora, is_peft_available
+from .ui import GEKORichUI, RICH_AVAILABLE
 
 __all__ = [
     "Bucket",
@@ -42,4 +43,6 @@ __all__ = [
     "SamplePartitioner",
     "apply_lora",
     "is_peft_available",
+    "GEKORichUI",
+    "RICH_AVAILABLE",
 ]
